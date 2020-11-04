@@ -17,27 +17,27 @@ $archive_permalink = rtrim( $archive_permalink, '/' );
 define( 'ORGNK_VENUES_REWRITE_SLUG', $archive_permalink );
 
 /**
- * Main Organik_Events plugin class
+ * Main Organik_Events_Venues class
  */
 class Organik_Events_Venues {
 
 	/**
      * Constructor function
      */
-	public function __construct( $version = ORGNK_EVENTS_VERSION ) {
+	public function __construct() {
 
 		// Hook into the 'init' action to add the Custom Post Type
-		add_action( 'init', array( $this, 'orgnk_venues_register_cpt' ), 0 );
+		add_action( 'init', array( $this, 'orgnk_venues_cpt_register' ), 0 );
 
 		// Change the title placeholder
 		add_filter( 'enter_title_here', array( $this, 'orgnk_venues_cpt_title_placeholder' ) );
 	}
 
 	/**
-	 * orgnk_venues_register_cpt()
+	 * orgnk_venues_cpt_register()
 	 * Register the Venues custom post type inside of Events
 	 */
-	public function orgnk_venues_register_cpt() {
+	public function orgnk_venues_cpt_register() {
 
 		$labels = array(
 			'name'                      	=> ORGNK_VENUES_PLURAL_NAME,
@@ -104,9 +104,11 @@ class Organik_Events_Venues {
 	 * orgnk_venues_cpt_title_placeholder()
 	 * Change CPT title placeholder on edit screen
 	 */
-	function orgnk_venues_cpt_title_placeholder( $title, $post ) {
+	function orgnk_venues_cpt_title_placeholder( $title ) {
 
-		if ( $post->post_type == ORGNK_VENUES_CPT_NAME ) {
+		$screen = get_current_screen();
+
+		if ( $screen->post_type == ORGNK_VENUES_CPT_NAME ) {
 			return 'Add venue name';
 		}
 		return $title;

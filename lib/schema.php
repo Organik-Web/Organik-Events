@@ -1,8 +1,8 @@
 <?php
 function orgnk_single_event_schema() {
 
-    $sub_schema = NULL;
     $schema = NULL;
+    $sub_schema = array();
 
     if ( is_singular( ORGNK_EVENTS_CPT_NAME ) ) {
 
@@ -25,9 +25,6 @@ function orgnk_single_event_schema() {
 
         // Check there is at least 1 date
         if ( $date_count ) {
-
-            // There is at least one date present, so set the sub schema as an array so we can add to it
-            $sub_schema = array();
 
             // Loop through repeaters
             for ( $i = 0; $i < $date_count; $i++ ) {

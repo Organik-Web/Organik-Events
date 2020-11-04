@@ -17,7 +17,7 @@ $archive_permalink = rtrim( $archive_permalink, '/' );
 define( 'ORGNK_EVENTS_REWRITE_SLUG', $archive_permalink );
 
 /**
- * Main Organik_Events plugin class
+ * Main Organik_Events class
  */
 class Organik_Events {
 
@@ -43,7 +43,7 @@ class Organik_Events {
 	public function __construct() {
 
         // Hook into the 'init' action to add the Custom Post Type
-		add_action( 'init', array( $this, 'orgnk_events_register_cpt' ), 0 );
+		add_action( 'init', array( $this, 'orgnk_events_cpt_register' ), 0 );
 
         // Change the title placeholder
 		add_filter( 'enter_title_here', array( $this, 'orgnk_events_cpt_title_placeholder' ) );
@@ -51,13 +51,13 @@ class Organik_Events {
 		// Modify the post type archive query
 		add_action( 'pre_get_posts', array( $this, 'orgnk_events_cpt_modify_archive_query' ) );
 
-		// Add the first event date to the admin list view and make it sortable
+		// Add post meta to the admin list view
 		add_filter( 'manage_' . ORGNK_EVENTS_CPT_NAME . '_posts_columns', array( $this, 'orgnk_events_cpt_admin_table_column' ) );
 		add_action( 'manage_' . ORGNK_EVENTS_CPT_NAME . '_posts_custom_column', array( $this, 'orgnk_events_cpt_admin_table_content' ), 10, 2 );
 		add_filter( 'manage_edit-' . ORGNK_EVENTS_CPT_NAME . '_sortable_columns', array( $this, 'orgnk_events_cpt_admin_table_sortable' ) );
 
 		// Add schema for this post type to the head
-		add_action( 'wp_head', array( $this, 'orgnk_events_event_schema_head' ) );
+		add_action( 'wp_head', array( $this, 'orgnk_events_cpt_schema_head' ) );
 
 		// Add a notice to the admin list view about how events are ordered in the front-end
 		add_action( 'views_edit-' . ORGNK_EVENTS_CPT_NAME, array( $this, 'orgnk_events_cpt_admin_table_notice' ) );
@@ -67,10 +67,10 @@ class Organik_Events {
 	}
 	
 	/**
-	 * orgnk_events_register_cpt()
+	 * orgnk_events_cpt_register()
 	 * Register the Events custom post type
 	 */
-	public function orgnk_events_register_cpt() {
+	public function orgnk_events_cpt_register() {
 
 		$labels = array(
 			'name'                      	=> ORGNK_EVENTS_PLURAL_NAME,
@@ -137,9 +137,11 @@ class Organik_Events {
 	 * orgnk_events_cpt_title_placeholder()
 	 * Change CPT title placeholder on edit screen
 	 */
-	public function orgnk_events_cpt_title_placeholder( $title, $post ) {
+	public function orgnk_events_cpt_title_placeholder( $title ) {
 
-		if ( $post->post_type == ORGNK_EVENTS_CPT_NAME ) {
+		$screen = get_current_screen();
+
+		if ( $screen->post_type == ORGNK_EVENTS_CPT_NAME ) {
 			return 'Add event title';
 		}
 		return $title;
@@ -236,10 +238,10 @@ class Organik_Events {
 	}
 
 	/**
-	 * orgnk_events_event_schema_head()
+	 * orgnk_events_cpt_schema_head()
 	 * Add Event schema to the document <head> if viewing a single event post
 	 */
-	public function orgnk_events_event_schema_head() {
+	public function orgnk_events_cpt_schema_head() {
 
 		$schema_script = NULL;
 
