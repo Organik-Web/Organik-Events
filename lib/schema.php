@@ -1,4 +1,8 @@
 <?php
+/**
+ * orgnk_single_event_schema()
+ * Generates the single event schema script for outputting in the document head
+ */
 function orgnk_single_event_schema() {
 
     $schema = NULL;

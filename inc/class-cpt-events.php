@@ -41,19 +41,19 @@ class Organik_Events {
         // Change the title placeholder
 		add_filter( 'enter_title_here', array( $this, 'orgnk_events_cpt_title_placeholder' ) );
 
-		// Modify the post type archive query
-		add_action( 'pre_get_posts', array( $this, 'orgnk_events_cpt_archive_query' ) );
-
 		// Add post meta to the admin list view
 		add_filter( 'manage_' . ORGNK_EVENTS_CPT_NAME . '_posts_columns', array( $this, 'orgnk_events_cpt_admin_table_column' ) );
 		add_action( 'manage_' . ORGNK_EVENTS_CPT_NAME . '_posts_custom_column', array( $this, 'orgnk_events_cpt_admin_table_content' ), 10, 2 );
 		add_filter( 'manage_edit-' . ORGNK_EVENTS_CPT_NAME . '_sortable_columns', array( $this, 'orgnk_events_cpt_admin_table_sortable' ) );
 
-		// Add schema for this post type to the head
-		add_action( 'wp_head', array( $this, 'orgnk_events_cpt_schema_head' ) );
-
 		// Add a notice to the admin list view about how events are ordered in the front-end
 		add_action( 'views_edit-' . ORGNK_EVENTS_CPT_NAME, array( $this, 'orgnk_events_cpt_admin_table_notice' ) );
+
+		// Modify the post type archive query
+		add_action( 'pre_get_posts', array( $this, 'orgnk_events_cpt_archive_query' ) );
+
+		// Add schema for this post type to the document head
+		add_action( 'wp_head', array( $this, 'orgnk_events_cpt_schema_head' ) );
 
 		// Register Venus CPT after this one has been setup
 		new Organik_Events_Venues();
@@ -157,49 +157,6 @@ class Organik_Events {
 	}
 
 	/**
-	 * orgnk_events_cpt_archive_query()
-	 * Change the events archive order to order by the event start date meta
-	 */
-	public function orgnk_events_cpt_archive_query( $query ) {
-
-		if ( $query->is_post_type_archive( ORGNK_EVENTS_CPT_NAME ) && !is_admin() && $query->is_main_query() ) {
-
-			$query->set( 'meta_key', 'event_dates_0_start' );
-			$query->set( 'orderby', 'meta_value' );
-			$query->set( 'order', 'ASC' );
-			$query->set( 'meta_query', array(
-				'relation'			=> 'OR',
-				array( // If start date or end date is greater than or equal to today
-					'relation'      	=> 'OR',
-					array(
-						'key'       	=> 'event_dates_0_start',
-						'value'     	=> time(),
-						'compare'   	=> '>='
-					),
-					array(
-						'key'       	=> 'event_dates_0_end',
-						'value'     	=> time(),
-						'compare'   	=> '>='
-					),
-				),
-				array( // If start date is greater than or equal to today, and end date is not set
-					array(
-						'key'       	=> 'event_dates_0_start',
-						'value'     	=> time(),
-						'compare'   	=> '>='
-					),
-					array(
-						'key'       	=> 'event_dates_0_end',
-						'compare'   	=> 'NOT EXISTS'
-					),
-				),
-			) );
-		}
-
-		return $query;
-	}
-
-	/**
 	 * orgnk_events_cpt_admin_table_column()
 	 * Register new column(s) in admin list view
 	 */
@@ -247,22 +204,6 @@ class Organik_Events {
 	}
 
 	/**
-	 * orgnk_events_cpt_schema_head()
-	 * Add Event schema to the document <head> if viewing a single event post
-	 */
-	public function orgnk_events_cpt_schema_head() {
-
-		$schema_script = NULL;
-
-		// Prevent the schema function from running on every page
-		if ( is_singular( ORGNK_EVENTS_CPT_NAME ) ) {
-			$schema_script = orgnk_single_event_schema();
-		}
-
-		echo $schema_script;
-	}
-
-	/**
 	 * orgnk_events_cpt_admin_table_notice()
 	 * Add a notice to the admin list view about how events are ordered in the front-end
 	 */
@@ -278,5 +219,64 @@ class Organik_Events {
 		}
 
 		echo $output;
+	}
+
+	/**
+	 * orgnk_events_cpt_archive_query()
+	 * Change the events archive order to order by the event start date meta
+	 */
+	public function orgnk_events_cpt_archive_query( $query ) {
+
+		if ( $query->is_post_type_archive( ORGNK_EVENTS_CPT_NAME ) && !is_admin() && $query->is_main_query() ) {
+
+			$query->set( 'meta_key', 'event_dates_0_start' );
+			$query->set( 'orderby', 'meta_value' );
+			$query->set( 'order', 'ASC' );
+			$query->set( 'meta_query', array(
+				'relation'			=> 'OR',
+				array( // If start date or end date is greater than or equal to today
+					'relation'      	=> 'OR',
+					array(
+						'key'       	=> 'event_dates_0_start',
+						'value'     	=> time(),
+						'compare'   	=> '>='
+					),
+					array(
+						'key'       	=> 'event_dates_0_end',
+						'value'     	=> time(),
+						'compare'   	=> '>='
+					),
+				),
+				array( // If start date is greater than or equal to today, and end date is not set
+					array(
+						'key'       	=> 'event_dates_0_start',
+						'value'     	=> time(),
+						'compare'   	=> '>='
+					),
+					array(
+						'key'       	=> 'event_dates_0_end',
+						'compare'   	=> 'NOT EXISTS'
+					),
+				),
+			) );
+		}
+
+		return $query;
+	}
+
+	/**
+	 * orgnk_events_cpt_schema_head()
+	 * Add Event schema to the document head if viewing a single event post
+	 */
+	public function orgnk_events_cpt_schema_head() {
+
+		$schema_script = NULL;
+
+		// Prevent the schema function from running on every page
+		if ( is_singular( ORGNK_EVENTS_CPT_NAME ) ) {
+			$schema_script = orgnk_single_event_schema();
+		}
+
+		echo $schema_script;
 	}
 }
