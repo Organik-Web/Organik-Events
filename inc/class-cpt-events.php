@@ -36,7 +36,7 @@ class Organik_Events {
 		add_action( 'init', array( $this, 'orgnk_events_cpt_archive_rewrite_slug' ) );
 
         // Hook into the 'init' action to add the Custom Post Type
-		add_action( 'init', array( $this, 'orgnk_events_cpt_register' ), 0 );
+		add_action( 'init', array( $this, 'orgnk_events_cpt_register' ) );
 
         // Change the title placeholder
 		add_filter( 'enter_title_here', array( $this, 'orgnk_events_cpt_title_placeholder' ) );

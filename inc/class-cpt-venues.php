@@ -7,16 +7,6 @@ define( 'ORGNK_VENUES_SINGLE_NAME', 'Venue' );
 define( 'ORGNK_VENUES_PLURAL_NAME', 'Venues' );
 
 /**
- * Define permalinks
- */
-$archive_page_id = get_option( 'page_for_' . ORGNK_VENUES_CPT_NAME );
-$archive_page_slug = str_replace( home_url(), '', get_permalink( $archive_page_id ) );
-$archive_permalink = ( $archive_page_id ? $archive_page_slug : 'venues' );
-$archive_permalink = ltrim( $archive_permalink, '/' );
-$archive_permalink = rtrim( $archive_permalink, '/' );
-define( 'ORGNK_VENUES_REWRITE_SLUG', $archive_permalink );
-
-/**
  * Main Organik_Events_Venues class
  */
 class Organik_Events_Venues {
@@ -26,8 +16,11 @@ class Organik_Events_Venues {
      */
 	public function __construct() {
 
+		// Define the CPT rewrite variable on init - required here because we need to use get_permalink() which isn't available when plugins are initialised
+		add_action( 'init', array( $this, 'orgnk_venues_cpt_archive_rewrite_slug' ) );
+
 		// Hook into the 'init' action to add the Custom Post Type
-		add_action( 'init', array( $this, 'orgnk_venues_cpt_register' ), 0 );
+		add_action( 'init', array( $this, 'orgnk_venues_cpt_register' ) );
 
 		// Change the title placeholder
 		add_filter( 'enter_title_here', array( $this, 'orgnk_venues_cpt_title_placeholder' ) );
@@ -98,6 +91,22 @@ class Organik_Events_Venues {
 			'rewrite'						=> $rewrite
 		);
 		register_post_type( ORGNK_VENUES_CPT_NAME, $args );
+	}
+
+	/**
+	 * orgnk_venues_cpt_archive_rewrite_slug()
+	 * Conditionally define the CPT archive permalink based on the pages for CPT functionality in Organik themes
+	 * Includes a fallback string to use as the slug if the option isn't set
+	 */
+	public function orgnk_venues_cpt_archive_rewrite_slug() {
+		$default_slug = 'venues';
+		$archive_page_id = get_option( 'page_for_' . ORGNK_VENUES_CPT_NAME );
+		$archive_page_slug = str_replace( home_url(), '', get_permalink( $archive_page_id ) );
+		$archive_permalink = ( $archive_page_id ? $archive_page_slug : $default_slug );
+		$archive_permalink = ltrim( $archive_permalink, '/' );
+		$archive_permalink = rtrim( $archive_permalink, '/' );
+
+		define( 'ORGNK_VENUES_REWRITE_SLUG', $archive_permalink );
 	}
 
 	/** 
