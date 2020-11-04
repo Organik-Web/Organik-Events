@@ -1,0 +1,27 @@
+# track theses files (i.e. do NOT ignore it)
+!.gitignore
+!.phpcs.xml.dist
+!README.md
+!CHANGELOG.md
+!composer.json
+
+# ignore all files starting with ~
+~*
+
+# ignore log files, databases and packages
+*.log
+*.sql
+*.sqlite
+.DS_Store
+.sass-cache/
+node_modules/
+bower_components/
+
+# ignore compiled files
+*.css
+*.css.map
+*.sass.map
+*.scss.map
+
+# ignore CodeKit config files
+*.codekit3
