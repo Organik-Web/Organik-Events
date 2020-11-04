@@ -7,16 +7,6 @@ define( 'ORGNK_EVENTS_SINGLE_NAME', 'Event' );
 define( 'ORGNK_EVENTS_PLURAL_NAME', 'Events' );
 
 /**
- * Define permalinks
- */
-$archive_page_id = get_option( 'page_for_' . ORGNK_EVENTS_CPT_NAME );
-$archive_page_slug = str_replace( home_url(), '', get_permalink( $archive_page_id ) );
-$archive_permalink = ( $archive_page_id ? $archive_page_slug : 'events' );
-$archive_permalink = ltrim( $archive_permalink, '/' );
-$archive_permalink = rtrim( $archive_permalink, '/' );
-define( 'ORGNK_EVENTS_REWRITE_SLUG', $archive_permalink );
-
-/**
  * Main Organik_Events class
  */
 class Organik_Events {
@@ -42,6 +32,9 @@ class Organik_Events {
      */
 	public function __construct() {
 
+		// Define the CPT rewrite variable on init - required here because we need to use get_permalink() which isn't available when plugins are initialised
+		add_action( 'init', array( $this, 'orgnk_events_cpt_archive_rewrite_slug' ) );
+
         // Hook into the 'init' action to add the Custom Post Type
 		add_action( 'init', array( $this, 'orgnk_events_cpt_register' ), 0 );
 
@@ -49,7 +42,7 @@ class Organik_Events {
 		add_filter( 'enter_title_here', array( $this, 'orgnk_events_cpt_title_placeholder' ) );
 
 		// Modify the post type archive query
-		add_action( 'pre_get_posts', array( $this, 'orgnk_events_cpt_modify_archive_query' ) );
+		add_action( 'pre_get_posts', array( $this, 'orgnk_events_cpt_archive_query' ) );
 
 		// Add post meta to the admin list view
 		add_filter( 'manage_' . ORGNK_EVENTS_CPT_NAME . '_posts_columns', array( $this, 'orgnk_events_cpt_admin_table_column' ) );
@@ -68,7 +61,7 @@ class Organik_Events {
 	
 	/**
 	 * orgnk_events_cpt_register()
-	 * Register the Events custom post type
+	 * Register the custom post type
 	 */
 	public function orgnk_events_cpt_register() {
 
@@ -133,6 +126,22 @@ class Organik_Events {
 		register_post_type( ORGNK_EVENTS_CPT_NAME, $args );
 	}
 
+	/**
+	 * orgnk_events_cpt_archive_rewrite_slug()
+	 * Conditionally define the CPT archive permalink based on the pages for CPT functionality in Organik themes
+	 * Includes a fallback string to use as the slug if the option isn't set
+	 */
+	public function orgnk_events_cpt_archive_rewrite_slug() {
+		$default_slug = 'events';
+		$archive_page_id = get_option( 'page_for_' . ORGNK_EVENTS_CPT_NAME );
+		$archive_page_slug = str_replace( home_url(), '', get_permalink( $archive_page_id ) );
+		$archive_permalink = ( $archive_page_id ? $archive_page_slug : $default_slug );
+		$archive_permalink = ltrim( $archive_permalink, '/' );
+		$archive_permalink = rtrim( $archive_permalink, '/' );
+
+		define( 'ORGNK_EVENTS_REWRITE_SLUG', $archive_permalink );
+	}
+
 	/** 
 	 * orgnk_events_cpt_title_placeholder()
 	 * Change CPT title placeholder on edit screen
@@ -148,10 +157,10 @@ class Organik_Events {
 	}
 
 	/**
-	 * orgnk_events_cpt_modify_archive_query()
+	 * orgnk_events_cpt_archive_query()
 	 * Change the events archive order to order by the event start date meta
 	 */
-	public function orgnk_events_cpt_modify_archive_query( $query ) {
+	public function orgnk_events_cpt_archive_query( $query ) {
 
 		if ( $query->is_post_type_archive( ORGNK_EVENTS_CPT_NAME ) && !is_admin() && $query->is_main_query() ) {
 
