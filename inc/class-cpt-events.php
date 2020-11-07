@@ -227,7 +227,7 @@ class Organik_Events {
 	 */
 	public function orgnk_events_cpt_archive_query( $query ) {
 
-		if ( $query->is_post_type_archive( ORGNK_EVENTS_CPT_NAME ) && !is_admin() && $query->is_main_query() ) {
+		if ( $query->is_post_type_archive( ORGNK_EVENTS_CPT_NAME ) && ! is_admin() && $query->is_main_query() ) {
 
 			$query->set( 'meta_key', 'event_dates_0_start' );
 			$query->set( 'orderby', 'meta_value' );
