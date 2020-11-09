@@ -33,7 +33,7 @@ class Organik_Events {
 	public function __construct() {
 
 		// Define the CPT rewrite variable on init - required here because we need to use get_permalink() which isn't available when plugins are initialised
-		add_action( 'init', array( $this, 'orgnk_events_cpt_archive_rewrite_slug' ) );
+		add_action( 'init', array( $this, 'orgnk_events_cpt_rewrite_slug' ) );
 
         // Hook into the 'init' action to add the Custom Post Type
 		add_action( 'init', array( $this, 'orgnk_events_cpt_register' ) );
@@ -127,11 +127,11 @@ class Organik_Events {
 	}
 
 	/**
-	 * orgnk_events_cpt_archive_rewrite_slug()
+	 * orgnk_events_cpt_rewrite_slug()
 	 * Conditionally define the CPT archive permalink based on the pages for CPT functionality in Organik themes
 	 * Includes a fallback string to use as the slug if the option isn't set
 	 */
-	public function orgnk_events_cpt_archive_rewrite_slug() {
+	public function orgnk_events_cpt_rewrite_slug() {
 		$default_slug = 'events';
 		$archive_page_id = get_option( 'page_for_' . ORGNK_EVENTS_CPT_NAME );
 		$archive_page_slug = str_replace( home_url(), '', get_permalink( $archive_page_id ) );
