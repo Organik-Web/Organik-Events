@@ -41,7 +41,7 @@ class Organik_Events {
         // Change the title placeholder
 		add_filter( 'enter_title_here', array( $this, 'orgnk_events_cpt_title_placeholder' ) );
 
-		// Add post meta to the admin list view
+		// Add post meta to the admin list view for this CPT
 		add_filter( 'manage_' . ORGNK_EVENTS_CPT_NAME . '_posts_columns', array( $this, 'orgnk_events_cpt_admin_table_column' ) );
 		add_action( 'manage_' . ORGNK_EVENTS_CPT_NAME . '_posts_custom_column', array( $this, 'orgnk_events_cpt_admin_table_content' ), 10, 2 );
 		add_filter( 'manage_edit-' . ORGNK_EVENTS_CPT_NAME . '_sortable_columns', array( $this, 'orgnk_events_cpt_admin_table_sortable' ) );

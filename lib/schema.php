@@ -167,10 +167,10 @@ function orgnk_single_event_schema() {
                                 if ( $ticket_status ) {
                                     if ( $ticket_status === 'in-stock' ) {
                                         $offer_schema['availability'] = 'https://schema.org/InStock';
-                                    } elseif ( $ticket_status === 'sold-out' ) {
-                                        $offer_schema['availability'] = 'https://schema.org/SoldOut';
                                     } elseif ( $ticket_status === 'pre-order' ) {
                                         $offer_schema['availability'] = 'https://schema.org/PreOrder';
+                                    } elseif ( $ticket_status === 'sold-out' ) {
+                                        $offer_schema['availability'] = 'https://schema.org/SoldOut';
                                     }
                                 }
 
