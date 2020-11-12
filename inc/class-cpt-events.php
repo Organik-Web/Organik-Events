@@ -49,8 +49,15 @@ class Organik_Events {
 		// Add a notice to the admin list view about how events are ordered in the front-end
 		add_action( 'views_edit-' . ORGNK_EVENTS_CPT_NAME, array( $this, 'orgnk_events_cpt_admin_table_notice' ) );
 
+		// Register a custom CRON event to automatically set expired events status to draft
+		add_action( 'init', array( $this, 'orgnk_events_cron_schedule_remove_expired' ) );
+		add_action( 'orgnk_events_remove_expired', array( $this, 'orgnk_events_remove_expired_task' ) );
+
 		// Modify the post type archive query
 		add_action( 'pre_get_posts', array( $this, 'orgnk_events_cpt_archive_query' ) );
+
+		// Modify the Organik theme sitemap get posts arguments
+		add_action( 'orgnk_sitemap_get_posts_arguments', array( $this, 'orgnk_events_sitemap_get_posts_arguments' ) );
 
 		// Add schema for this post type to the document head
 		add_action( 'wp_head', array( $this, 'orgnk_events_cpt_schema_head' ) );
@@ -214,11 +221,69 @@ class Organik_Events {
 
 		if ( is_admin() && $current_screen->post_type === ORGNK_EVENTS_CPT_NAME ) {
 			$output .= '<div class="notice notice-info inline" style="margin: 15px 0;">';
-			$output .= '<p><strong style="display: block; font-size: 16px; margin: 0 0 5px 0;">Automatic ordering of events</strong>Events are automatically ordered on the front-end by the \'Event First Date\' shown in the \'First Date\' column below. Additionally, events will only display on the front-end if the \'Event First Date\' is in the future. If an event is not displaying as expected, check you have set and ordered each event\'s dates correctly, with the soonest date first.</p>';
+			$output .= '<p><strong style="display: block; font-size: 16px; margin: 0 0 5px 0;">Event ordering</strong>Events are automatically ordered on the front-end by the \'Event First Date\' shown in the \'First Date\' column below. If an event is not displaying as expected, check you have set and ordered each event\'s dates correctly, with the soonest date first.</p>';
+			$output .= '<p><strong style="display: block; font-size: 16px; margin: 0 0 5px 0;">Event expiry</strong>When an event\'s last date is in the past, the event\'s status will automatically be set to \'draft\' to hide it on the front-end.</p>';
 			$output .= '</div>';
 		}
 
 		echo $output;
+	}
+
+	/**
+	 * orgnk_events_cron_schedule_remove_expired()
+	 * Register a custom CRON event on init to check for events to draft hourly
+	 */
+	public function orgnk_events_cron_schedule_remove_expired() {
+
+		$timestamp = wp_next_scheduled( 'orgnk_events_remove_expired' );
+
+		if ( $timestamp == false ) {
+			wp_schedule_event( time(), 'hourly', 'orgnk_events_remove_expired' );
+		}
+	}
+
+	/**
+	 * orgnk_events_remove_expired_task()
+	 * Handle drafting of events periodically
+	 */
+	public function orgnk_events_remove_expired_task() {
+
+		$events = get_posts( array(
+			'post_type'      	=> ORGNK_EVENTS_CPT_NAME,
+			'post_status'    	=> 'publish',
+			'fields' 			=> 'ids',
+			'posts_per_page' 	=> -1
+		) );
+
+		foreach ( $events as $event ) {
+
+			$expiration_date = NULL;
+			$date_count = esc_html( get_post_meta( $event, 'event_dates', true ) );
+			$i = $date_count - 1; // Subtract one from count to get correct interger
+			$last_date_start = esc_html( get_post_meta( $event, 'event_dates_' . $i . '_start', true ) );
+			$last_date_end = esc_html( get_post_meta( $event, 'event_dates_' . $i . '_end', true ) );
+
+			if ( $last_date_end ) {
+				$expiration_date = $last_date_end;
+			} else {
+				$expiration_date = $last_date_start;
+			}
+
+			// Bail if no expire date set
+			if ( ! $expiration_date ) {
+				return;
+			}
+
+			$expiration_date = strtotime( $expiration_date );
+			$now = time();
+
+			if ( $expiration_date <= $now ) {
+				wp_update_post( array(
+					'ID'          	=> $event,
+					'post_status' 	=> 'draft'
+				) );
+			}
+		}
 	}
 
 	/**
@@ -232,36 +297,24 @@ class Organik_Events {
 			$query->set( 'meta_key', 'event_dates_0_start' );
 			$query->set( 'orderby', 'meta_value' );
 			$query->set( 'order', 'ASC' );
-			$query->set( 'meta_query', array(
-				'relation'			=> 'OR',
-				array( // If start date or end date is greater than or equal to today
-					'relation'      	=> 'OR',
-					array(
-						'key'       	=> 'event_dates_0_start',
-						'value'     	=> time(),
-						'compare'   	=> '>='
-					),
-					array(
-						'key'       	=> 'event_dates_0_end',
-						'value'     	=> time(),
-						'compare'   	=> '>='
-					),
-				),
-				array( // If start date is greater than or equal to today, and end date is not set
-					array(
-						'key'       	=> 'event_dates_0_start',
-						'value'     	=> time(),
-						'compare'   	=> '>='
-					),
-					array(
-						'key'       	=> 'event_dates_0_end',
-						'compare'   	=> 'NOT EXISTS'
-					),
-				),
-			) );
 		}
 
 		return $query;
+	}
+
+	/**
+	 * orgnk_events_sitemap_get_posts_arguments()
+	 * Change the events archive order to order by the event start date meta
+	 */
+	public function orgnk_events_sitemap_get_posts_arguments( $args ) {
+
+		if ( $args['post_type'] === 'event' ) {
+			$args['meta_key'] = 'event_dates_0_start';
+			$args['orderby'] = 'meta_value';
+			$args['order'] = 'ASC';
+		}
+
+		return $args;
 	}
 
 	/**
