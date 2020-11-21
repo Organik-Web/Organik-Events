@@ -262,11 +262,11 @@ function orgnk_events_entry_venue( $short = false ) {
 
 
 /**
- * orgnk_events_entry_book_tickets_button()
+ * orgnk_events_entry_tickets_button()
  * Generates an offsite booking button for an event, if the event's on sale date isn't set or if it's set and in the past
  * Accepts a string for changing the button text
  */
-function orgnk_events_entry_book_tickets_button( $button_text = 'Book now' ) {
+function orgnk_events_entry_tickets_button( $button_text = 'Book now' ) {
 	
 	$output = '';
 
@@ -314,8 +314,11 @@ function orgnk_events_entry_first_date_badge() {
 
 
 
-
-function orgnk_events_entry_details() {
+/**
+ * orgnk_events_entry_meta()
+ * Generates a full table of the event's details
+ */
+function orgnk_events_entry_meta( $heading_size = 'h3' ) {
 
 	$output = '';
 
@@ -332,98 +335,103 @@ function orgnk_events_entry_details() {
 
 	if ( $dates ) {
 
-		$output .= '<div class="meta-table-header"><h2 class="title">Event details</h2></div>';
+		$output .= '<div class="entry-meta entry-meta-table event-entry-meta">';
 
-		$output .= '<div class="meta-group dates">';
-
-			$output .= '<div class="group-label">';
-				$output .= '<span class="label">';
-				$output .= ( $dates > 1 ) ? 'Dates' : 'Date';
-				$output .= '</span>';
+			$output .= '<div class="meta-table-header">';
+			$output .= '<span class="title ' . $heading_size . '">Event details</span>';
 			$output .= '</div>';
 
-			$output .= '<div class="group-content">';
-				$output .= orgnk_events_entry_schedule();
+			$output .= '<div class="meta-group dates">';
+
+				$output .= '<div class="group-label">';
+					$output .= '<span class="label">';
+					$output .= ( $dates > 1 ) ? 'Dates' : 'Date';
+					$output .= '</span>';
+				$output .= '</div>';
+
+				$output .= '<div class="group-content">';
+					$output .= orgnk_events_entry_schedule();
+				$output .= '</div>';
+
 			$output .= '</div>';
 
+			if ( ( $type === 'offline' || $type === 'mixed' ) && $venue_id ) {
+
+				$output .= '<div class="meta-group venue">';
+
+					$output .= '<div class="group-label">';
+						$output .= '<span class="label">Venue</span>';
+					$output .= '</div>';
+
+					$output .= '<div class="group-content">';
+						$output .= orgnk_events_entry_venue();
+					$output .= '</div>';
+
+				$output .= '</div>';
+			}
+			
+			if ( ( $type === 'online' || $type === 'mixed' ) && $virtual_location ) {
+				$output .= '<div class="meta-group virtual-location">';
+
+					$output .= '<div class="group-label">';
+						$output .= '<span class="label">Watch online</span>';
+					$output .= '</div>';
+
+					$output .= '<div class="group-content">';
+						$output .= '<a class="event-url" href="' . $virtual_location . '" target="_blank" rel="noopener">' . $virtual_location . '</a>';
+					$output .= '</div>';
+
+				$output .= '</div>';
+			}
+
+			if ( $toggle_ticketing && $tickets ) {
+
+				$output .= '<div class="meta-group tickets">';
+
+					$output .= '<div class="group-label">';
+						$output .= '<span class="label">Tickets</span>';
+					$output .= '</div>';
+
+					$output .= '<div class="group-content">';
+						$output .= orgnk_events_entry_ticket_types();
+					$output .= '</div>';
+
+				$output .= '</div>';
+			}
+
+			if ( $organiser ) {
+				$output .= '<div class="meta-group organiser">';
+
+					$output .= '<div class="group-label">';
+						$output .= '<span class="label">Organiser</span>';
+					$output .= '</div>';
+
+					$output .= '<div class="group-content">';
+						if ( $organiser_link ) {
+							$output .= '<a class="organiser-name organiser-link" href="' . $organiser_link . '" target="_blank" rel="noopener">' . $organiser . '</a>';
+						} else {
+							$output .= '<span class="organiser-name">' . $organiser . '</span>';
+						}
+					$output .= '</div>';
+
+				$output .= '</div>';
+			}
+
+			if ( $notes ) {
+
+				$output .= '<div class="meta-group notes">';
+
+					$output .= '<div class="group-label">';
+						$output .= '<span class="label">Notes</span>';
+					$output .= '</div>';
+
+					$output .= '<div class="group-content">';
+						$output .= $notes;
+					$output .= '</div>';
+
+				$output .= '</div>';
+			}
 		$output .= '</div>';
-
-		if ( ( $type === 'offline' || $type === 'mixed' ) && $venue_id ) {
-
-			$output .= '<div class="meta-group venue">';
-
-				$output .= '<div class="group-label">';
-					$output .= '<span class="label">Venue</span>';
-				$output .= '</div>';
-
-				$output .= '<div class="group-content">';
-					$output .= orgnk_events_entry_venue();
-				$output .= '</div>';
-
-			$output .= '</div>';
-		}
-		
-		if ( ( $type === 'online' || $type === 'mixed' ) && $virtual_location ) {
-			$output .= '<div class="meta-group virtual-location">';
-
-				$output .= '<div class="group-label">';
-					$output .= '<span class="label">Watch online</span>';
-				$output .= '</div>';
-
-				$output .= '<div class="group-content">';
-					$output .= '<a class="event-url" href="' . $virtual_location . '" target="_blank" rel="noopener">' . $virtual_location . '</a>';
-				$output .= '</div>';
-
-			$output .= '</div>';
-		}
-
-		if ( $toggle_ticketing && $tickets ) {
-
-			$output .= '<div class="meta-group tickets">';
-
-				$output .= '<div class="group-label">';
-					$output .= '<span class="label">Tickets</span>';
-				$output .= '</div>';
-
-				$output .= '<div class="group-content">';
-					$output .= orgnk_events_entry_ticket_types();
-				$output .= '</div>';
-
-			$output .= '</div>';
-		}
-
-		if ( $organiser ) {
-			$output .= '<div class="meta-group organiser">';
-
-				$output .= '<div class="group-label">';
-					$output .= '<span class="label">Organiser</span>';
-				$output .= '</div>';
-
-				$output .= '<div class="group-content">';
-					if ( $organiser_link ) {
-						$output .= '<a class="organiser-name organiser-link" href="' . $organiser_link . '" target="_blank" rel="noopener">' . $organiser . '</a>';
-					} else {
-						$output .= '<span class="organiser-name">' . $organiser . '</span>';
-					}
-				$output .= '</div>';
-
-			$output .= '</div>';
-		}
-
-		if ( $notes ) {
-
-			$output .= '<div class="meta-group notes">';
-
-				$output .= '<div class="group-label">';
-					$output .= '<span class="label">Notes</span>';
-				$output .= '</div>';
-
-				$output .= '<div class="group-content">';
-					$output .= $notes;
-				$output .= '</div>';
-
-			$output .= '</div>';
-		}
 	}
 	return $output;
 }
