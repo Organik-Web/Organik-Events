@@ -204,7 +204,6 @@ function orgnk_events_entry_badge_list() {
 
 
 
-
 /**
  * orgnk_events_entry_venue()
  * Returns the events venue details, either in a short format (name, street address and suburb), or in full
