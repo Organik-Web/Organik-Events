@@ -117,7 +117,7 @@ class Organik_Events_Venues {
 
 		$screen = get_current_screen();
 
-		if ( $screen->post_type == ORGNK_VENUES_CPT_NAME ) {
+		if ( $screen && $screen->post_type == ORGNK_VENUES_CPT_NAME ) {
 			return 'Add venue name';
 		}
 		return $title;

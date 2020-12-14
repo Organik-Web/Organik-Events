@@ -157,7 +157,7 @@ class Organik_Events {
 
 		$screen = get_current_screen();
 
-		if ( $screen->post_type == ORGNK_EVENTS_CPT_NAME ) {
+		if ( $screen && $screen->post_type == ORGNK_EVENTS_CPT_NAME ) {
 			return 'Add event title';
 		}
 		return $title;
@@ -219,7 +219,7 @@ class Organik_Events {
 		$output = '';
 		$current_screen = get_current_screen();
 
-		if ( is_admin() && $current_screen->post_type === ORGNK_EVENTS_CPT_NAME ) {
+		if ( is_admin() && $current_screen && $current_screen->post_type === ORGNK_EVENTS_CPT_NAME ) {
 			$output .= '<div class="notice notice-info inline" style="margin: 15px 0;">';
 			$output .= '<p><strong style="display: block; font-size: 16px; margin: 0 0 5px 0;">Event ordering</strong>Events are automatically ordered on the front-end by the \'Event First Date\' shown in the \'First Date\' column below. If an event is not displaying as expected, check you have set and ordered each event\'s dates correctly, with the soonest date first.</p>';
 			$output .= '<p><strong style="display: block; font-size: 16px; margin: 0 0 5px 0;">Event expiry</strong>When an event\'s last date is in the past, the event\'s status will automatically be set to \'draft\' to hide it on the front-end.</p>';
