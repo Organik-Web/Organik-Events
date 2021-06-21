@@ -26,7 +26,7 @@ class Organik_Events {
         }
         return self::$instance;
 	}
-	
+
 	/**
      * Constructor function
      */
@@ -45,9 +45,10 @@ class Organik_Events {
 		add_filter( 'manage_' . ORGNK_EVENTS_CPT_NAME . '_posts_columns', array( $this, 'orgnk_events_cpt_admin_table_column' ) );
 		add_action( 'manage_' . ORGNK_EVENTS_CPT_NAME . '_posts_custom_column', array( $this, 'orgnk_events_cpt_admin_table_content' ), 10, 2 );
 		add_filter( 'manage_edit-' . ORGNK_EVENTS_CPT_NAME . '_sortable_columns', array( $this, 'orgnk_events_cpt_admin_table_sortable' ) );
+		add_action( 'pre_get_posts', array( $this, 'orgnk_events_cpt_admin_table_sortby' ) );
 
-		// Add a notice to the admin list view about how events are ordered in the front-end
-		add_action( 'views_edit-' . ORGNK_EVENTS_CPT_NAME, array( $this, 'orgnk_events_cpt_admin_table_notice' ) );
+		// Add a notice to the admin list view for this CPT
+		add_action( 'admin_notices', array( $this, 'orgnk_events_cpt_admin_table_notice' ) );
 
 		// Register a custom CRON event to automatically set expired events status to draft
 		add_action( 'init', array( $this, 'orgnk_events_cron_schedule_remove_expired' ) );
@@ -62,10 +63,10 @@ class Organik_Events {
 		// Add schema for this post type to the document head
 		add_action( 'wp_head', array( $this, 'orgnk_events_cpt_schema_head' ) );
 
-		// Register Venus CPT after this one has been setup
+		// Register Venues CPT after this one has been setup
 		new Organik_Events_Venues();
 	}
-	
+
 	/**
 	 * orgnk_events_cpt_register()
 	 * Register the custom post type
@@ -149,7 +150,7 @@ class Organik_Events {
 		define( 'ORGNK_EVENTS_REWRITE_SLUG', $archive_permalink );
 	}
 
-	/** 
+	/**
 	 * orgnk_events_cpt_title_placeholder()
 	 * Change CPT title placeholder on edit screen
 	 */
@@ -168,7 +169,7 @@ class Organik_Events {
 	 * Register new column(s) in admin list view
 	 */
 	public function orgnk_events_cpt_admin_table_column( $defaults ) {
-		
+
 		$new_order = array();
 
 		foreach ( $defaults as $key => $value ) {
@@ -188,10 +189,10 @@ class Organik_Events {
 	 * Return the content for the new admin list view columns for each post
 	 */
 	public function orgnk_events_cpt_admin_table_content( $column_name, $post_id ) {
-			
+
 		if ( $column_name == 'event_first_date' ) {
 			$first_date = strtotime( esc_html( get_post_meta( $post_id, 'event_dates_0_start', true ) ) );
-			$first_date = date( 'g:i a, d F Y', $first_date );
+			$first_date = date( 'd F Y', $first_date );
 			echo $first_date;
 		}
 
@@ -211,18 +212,33 @@ class Organik_Events {
 	}
 
 	/**
+	 * orgnk_events_cpt_admin_table_sortby()
+	 * Modify the query arguments when sorting the event first date column to order by the event first date meta value
+	 */
+	public function orgnk_events_cpt_admin_table_sortby( $query ) {
+
+		$orderby = $query->get( 'orderby' );
+
+		if ( isset( $orderby ) && 'event_first_date' == $orderby ) {
+			$query->set( 'meta_key', 'event_dates_0_start' );
+			$query->set( 'orderby', 'meta_value' );
+		}
+	}
+
+	/**
 	 * orgnk_events_cpt_admin_table_notice()
 	 * Add a notice to the admin list view about how events are ordered in the front-end
 	 */
-	public function orgnk_events_cpt_admin_table_notice( $post ) {
+	public function orgnk_events_cpt_admin_table_notice() {
 
 		$output = '';
 		$current_screen = get_current_screen();
 
-		if ( is_admin() && $current_screen && $current_screen->post_type === ORGNK_EVENTS_CPT_NAME ) {
-			$output .= '<div class="notice notice-info inline" style="margin: 15px 0;">';
-			$output .= '<p><strong style="display: block; font-size: 16px; margin: 0 0 5px 0;">Event ordering</strong>Events are automatically ordered on the front-end by the \'Event First Date\' shown in the \'First Date\' column below. If an event is not displaying as expected, check you have set and ordered each event\'s dates correctly, with the soonest date first.</p>';
-			$output .= '<p><strong style="display: block; font-size: 16px; margin: 0 0 5px 0;">Event expiry</strong>When an event\'s last date is in the past, the event\'s status will automatically be set to \'draft\' to hide it on the front-end.</p>';
+		if ( is_admin() && $current_screen && $current_screen->post_type === ORGNK_EVENTS_CPT_NAME && $current_screen->base === 'edit' ) {
+			$output .= '<div class="notice notice-info" style="margin: 15px 0;">';
+			$output .= '<p><strong style="display: block; font-size: 16px; margin: 0 0 10px 0;">Event ordering</strong>Events are automatically ordered on the front-end by the \'Event First Date\' shown in the \'First Date\' column below. If an event is not displaying as expected, check you have set and ordered each event\'s dates correctly, with the soonest date first.</p>';
+			$output .= '<hr style="margin: 10px 0;">';
+			$output .= '<p><strong style="display: block; font-size: 16px; margin: 0 0 10px 0;">Event expiry</strong>When an event\'s last date is in the past, the event\'s status will automatically be set to \'draft\' to hide it on the front-end.</p>';
 			$output .= '</div>';
 		}
 
@@ -319,7 +335,7 @@ class Organik_Events {
 
 	/**
 	 * orgnk_events_cpt_schema_head()
-	 * Add Event schema to the document head if viewing a single event post
+	 * Add event schema to the document head if viewing a single event post
 	 */
 	public function orgnk_events_cpt_schema_head() {
 

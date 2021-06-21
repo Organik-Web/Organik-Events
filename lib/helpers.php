@@ -1,6 +1,6 @@
 <?php
 //=======================================================================================================================================================
-// Event helper & templating functions
+// Events helper & templating functions
 //=======================================================================================================================================================
 
 /**
@@ -10,8 +10,8 @@
  */
 function orgnk_events_entry_schedule( $first = false, $date_size = false ) {
 
-	$output = '';
-	$date_class = ( $date_size ) ? ' ' . $date_size : '';
+	$output = NULL;
+	$date_class = ( $date_size ) ? ' ' . $date_size : NULL;
 	$type_class = ( $first ) ? ' simple-schedule' : ' list-schedule';
 
 	// Modify the HTML output if only one date is being printed
@@ -19,7 +19,7 @@ function orgnk_events_entry_schedule( $first = false, $date_size = false ) {
 	$li = ( $first === true ) ? 'span' : 'li';
 
 	// Get dates
-	$dates             		= esc_html( get_post_meta( orgnk_get_the_ID(), 'event_dates', true ) );
+	$dates             		= esc_html( get_post_meta( get_the_ID(), 'event_dates', true ) );
 
 	if ( $dates ) {
 
@@ -28,13 +28,13 @@ function orgnk_events_entry_schedule( $first = false, $date_size = false ) {
 		for ( $i = 0; $i < $dates; $i++ ) {
 
 			// Variables
-			$event_start 			= strtotime( esc_html( get_post_meta( orgnk_get_the_ID(), 'event_dates_' . $i . '_start', true ) ) );
-			$start_time 			= ( $event_start ) ? date( 'g:i a', $event_start ) : '';
-			$start_date 			= ( $event_start ) ? date( 'j F Y', $event_start ) : '';
+			$event_start 			= strtotime( esc_html( get_post_meta( get_the_ID(), 'event_dates_' . $i . '_start', true ) ) );
+			$start_time 			= ( $event_start ) ? date( 'g:i a', $event_start ) : NULL;
+			$start_date 			= ( $event_start ) ? date( 'j F Y', $event_start ) : NULL;
 
-			$event_end 				= strtotime( esc_html( get_post_meta( orgnk_get_the_ID(), 'event_dates_' . $i . '_end', true ) ) );
-			$end_time 				= ( $event_end ) ? date( 'g:i a', $event_end ) : '';
-			$end_date 				= ( $event_end ) ? date( 'j F Y', $event_end ) : '';
+			$event_end 				= strtotime( esc_html( get_post_meta( get_the_ID(), 'event_dates_' . $i . '_end', true ) ) );
+			$end_time 				= ( $event_end ) ? date( 'g:i a', $event_end ) : NULL;
+			$end_date 				= ( $event_end ) ? date( 'j F Y', $event_end ) : NULL;
 
 			// Start date and time is the bare minimum needed to run this function
 			if ( $start_time && $start_date ) {
@@ -80,8 +80,7 @@ function orgnk_events_entry_schedule( $first = false, $date_size = false ) {
     return $output;
 }
 
-
-
+//=======================================================================================================================================================
 
 /**
  * orgnk_events_entry_ticket_types()
@@ -89,8 +88,8 @@ function orgnk_events_entry_schedule( $first = false, $date_size = false ) {
  */
 function orgnk_events_entry_ticket_types() {
 
-	$output 				= '';
-	$tickets	            = esc_html( get_post_meta( orgnk_get_the_ID(), 'event_ticket_types', true ) );
+	$output 				= NULL;
+	$tickets	            = esc_html( get_post_meta( get_the_ID(), 'event_ticket_types', true ) );
 
 	if ( $tickets ) {
 
@@ -99,8 +98,8 @@ function orgnk_events_entry_ticket_types() {
 		for ( $i = 0; $i < $tickets; $i++ ) {
 
 			// Variables
-			$ticket_type		= esc_html( get_post_meta( orgnk_get_the_ID(), 'event_ticket_types_' . $i . '_type', true ) );
-			$ticket_price      	= esc_html( get_post_meta( orgnk_get_the_ID(), 'event_ticket_types_' . $i . '_price', true ) );
+			$ticket_type		= esc_html( get_post_meta( get_the_ID(), 'event_ticket_types_' . $i . '_type', true ) );
+			$ticket_price      	= esc_html( get_post_meta( get_the_ID(), 'event_ticket_types_' . $i . '_price', true ) );
 
 			if ( $ticket_type && $ticket_price ) {
 
@@ -116,8 +115,7 @@ function orgnk_events_entry_ticket_types() {
 	return $output;
 }
 
-
-
+//=======================================================================================================================================================
 
 /**
  * orgnk_events_entry_online_event_badge()
@@ -126,8 +124,8 @@ function orgnk_events_entry_ticket_types() {
  */
 function orgnk_events_entry_online_event_badge() {
 
-	$output 				= '';
-	$type                   = esc_html( get_post_meta( orgnk_get_the_ID(), 'event_type', true ) );
+	$output 				= NULL;
+	$type                   = esc_html( get_post_meta( get_the_ID(), 'event_type', true ) );
 
 	if ( $type === 'online' || $type === 'mixed' ) {
 		$output .= '<div class="badge virtual-event"><i class="icon"></i>Online event</div>';
@@ -136,8 +134,7 @@ function orgnk_events_entry_online_event_badge() {
 	return $output;
 }
 
-
-
+//=======================================================================================================================================================
 
 /**
  * orgnk_events_entry_sale_status_badge()
@@ -147,10 +144,10 @@ function orgnk_events_entry_online_event_badge() {
  */
 function orgnk_events_entry_sale_status_badge() {
 
-	$output 				= '';
-	$event_status			= esc_html( get_post_meta( orgnk_get_the_ID(), 'event_status', true ) );
-	$ticket_status			= esc_html( get_post_meta( orgnk_get_the_ID(), 'event_ticket_status', true ) );
-	$onsale          		= strtotime( esc_html( get_post_meta( orgnk_get_the_ID(), 'event_ticket_onsale_date', true ) ) );
+	$output 				= NULL;
+	$event_status			= esc_html( get_post_meta( get_the_ID(), 'event_status', true ) );
+	$ticket_status			= esc_html( get_post_meta( get_the_ID(), 'event_ticket_status', true ) );
+	$onsale          		= strtotime( esc_html( get_post_meta( get_the_ID(), 'event_ticket_onsale_date', true ) ) );
 
 	if ( $event_status && $ticket_status ) {
 
@@ -176,7 +173,7 @@ function orgnk_events_entry_sale_status_badge() {
 	return $output;
 }
 
-
+//=======================================================================================================================================================
 
 /**
  * orgnk_events_entry_badge_list()
@@ -184,8 +181,8 @@ function orgnk_events_entry_sale_status_badge() {
  */
 function orgnk_events_entry_badge_list() {
 
-	$badges = '';
-	$output = '';
+	$badges = NULL;
+	$output = NULL;
 
 	if ( orgnk_events_entry_online_event_badge() ) {
 		$badges .= orgnk_events_entry_online_event_badge();
@@ -196,29 +193,29 @@ function orgnk_events_entry_badge_list() {
 	}
 
 	if ( $badges ) {
-		$output = '<div class="event-badge-list">' . $badges . '</div>';
+		$output = '<div class="badge-group event-badge-list">' . $badges . '</div>';
 	}
 
 	return $output;
 }
 
-
+//=======================================================================================================================================================
 
 /**
  * orgnk_events_entry_venue()
- * Returns the events venue details, either in a short format (name, street address and suburb), or in full
+ * Returns the events venue details, either in a short format or in full (name, street address and suburb)
  */
 function orgnk_events_entry_venue( $short = false ) {
 
-	$output 				= '';
-	$type                   = esc_html( get_post_meta( orgnk_get_the_ID(), 'event_type', true ) );
-	$venue_id               = esc_html( get_post_meta( orgnk_get_the_ID(), 'event_venue', true ) );
+	$output 				= NULL;
+	$type                   = esc_html( get_post_meta( get_the_ID(), 'event_type', true ) );
+	$venue_id               = esc_html( get_post_meta( get_the_ID(), 'event_venue', true ) );
 
 	if ( ( $type === 'offline' || $type === 'mixed' ) && $venue_id ) {
 
 		// Get venue post variables
 		$venue_name		        = esc_html( get_the_title( $venue_id ) );
-		$venue_address          = esc_html( get_post_meta( $venue_id, 'venue_street_address', true ) );
+		$venue_address          = esc_html( get_post_meta( $venue_id, 'venue_address', true ) );
 		$venue_suburb           = esc_html( get_post_meta( $venue_id, 'venue_suburb', true ) );
 		$venue_city	            = esc_html( get_post_meta( $venue_id, 'venue_city', true ) );
 		$venue_region           = esc_html( get_post_meta( $venue_id, 'venue_region', true ) );
@@ -228,7 +225,7 @@ function orgnk_events_entry_venue( $short = false ) {
 		$output .= '<span class="venue-name">' . $venue_name . '</span>';
 
 		if ( $short === true ) {
-			
+
 			if ( $venue_address && $venue_suburb ) {
 				$output .= '<span class="venue-short-address">' . $venue_address . ', ' . $venue_suburb . '</span>';
 			}
@@ -257,8 +254,7 @@ function orgnk_events_entry_venue( $short = false ) {
 	return $output;
 }
 
-
-
+//=======================================================================================================================================================
 
 /**
  * orgnk_events_entry_tickets_button()
@@ -266,15 +262,14 @@ function orgnk_events_entry_venue( $short = false ) {
  * Accepts a string for changing the button text
  */
 function orgnk_events_entry_tickets_button( $button_text = 'Book now' ) {
-	
-	$output = '';
 
-	$event_status			= esc_html( get_post_meta( orgnk_get_the_ID(), 'event_status', true ) );
-	$ticket_status			= esc_html( get_post_meta( orgnk_get_the_ID(), 'event_ticket_status', true ) );
-	$link            		= esc_url( get_post_meta( orgnk_get_the_ID(), 'event_ticket_link', true ) );
-	$onsale          		= strtotime( esc_html( get_post_meta( orgnk_get_the_ID(), 'event_ticket_onsale_date', true ) ) );
+	$output				= null;
+	$event_status		= esc_html( get_post_meta( get_the_ID(), 'event_status', true ) );
+	$ticket_status		= esc_html( get_post_meta( get_the_ID(), 'event_ticket_status', true ) );
+	$link				= esc_url( get_post_meta( get_the_ID(), 'event_ticket_link', true ) );
+	$onsale				= strtotime( esc_html( get_post_meta( get_the_ID(), 'event_ticket_onsale_date', true ) ) );
 
-	if ( $link && $event_status === 'scheduled' ) { 
+	if ( $link && $event_status === 'scheduled' ) {
 
 		if ( $ticket_status === 'in-stock' || $ticket_status === 'pre-order' ) {
 
@@ -288,8 +283,7 @@ function orgnk_events_entry_tickets_button( $button_text = 'Book now' ) {
 	return $output;
 }
 
-
-
+//=======================================================================================================================================================
 
 /**
  * orgnk_events_entry_first_date_badge()
@@ -297,11 +291,11 @@ function orgnk_events_entry_tickets_button( $button_text = 'Book now' ) {
  */
 function orgnk_events_entry_first_date_badge() {
 
-	$output 				= '';
-	$first_date        		= strtotime( esc_html( get_post_meta( orgnk_get_the_ID(), 'event_dates_0_start', true ) ) );
+	$output 				= NULL;
+	$first_date        		= strtotime( esc_html( get_post_meta( get_the_ID(), 'event_dates_0_start', true ) ) );
 
 	if ( $first_date ) {
-		
+
 		$output .= '<div class="event-start-badge">';
 		$output .= '<span class="month">' . date( 'M', $first_date ) . '</span>';
 		$output .= '<span class="day">' . date( 'd', $first_date ) . '</span>';
@@ -311,126 +305,137 @@ function orgnk_events_entry_first_date_badge() {
 	return $output;
 }
 
-
+//=======================================================================================================================================================
 
 /**
- * orgnk_events_entry_meta()
- * Generates a full table of the event's details
+ * orgnk_events_entry_meta_table()
+ * Generates a table of the event's details
  */
-function orgnk_events_entry_meta( $heading_size = 'h3' ) {
+function orgnk_events_entry_meta_table( $heading_text = 'Event details', $heading_size = 'h3' ) {
 
-	$output = '';
+	$output = NULL;
 
 	// Variables
-	$dates             		= esc_html( get_post_meta( orgnk_get_the_ID(), 'event_dates', true ) );
-	$type                   = esc_html( get_post_meta( orgnk_get_the_ID(), 'event_type', true ) );
-	$venue_id               = esc_html( get_post_meta( orgnk_get_the_ID(), 'event_venue', true ) );
-	$virtual_location       = esc_url( get_post_meta( orgnk_get_the_ID(), 'event_virtual_location', true ) );
-	$organiser              = esc_html( get_post_meta( orgnk_get_the_ID(), 'event_organiser', true ) );
-	$organiser_link         = esc_url( get_post_meta( orgnk_get_the_ID(), 'event_organiser_link', true ) );
-	$notes			        = esc_html( get_post_meta( orgnk_get_the_ID(), 'event_notes', true ) );
-	$toggle_ticketing       = esc_html( get_post_meta( orgnk_get_the_ID(), 'event_ticket_toggle', true ) );
-	$tickets	            = esc_html( get_post_meta( orgnk_get_the_ID(), 'event_ticket_types', true ) );
+	$dates             		= esc_html( get_post_meta( get_the_ID(), 'event_dates', true ) );
+	$type                   = esc_html( get_post_meta( get_the_ID(), 'event_type', true ) );
+	$venue_id               = esc_html( get_post_meta( get_the_ID(), 'event_venue', true ) );
+	$virtual_location       = esc_url( get_post_meta( get_the_ID(), 'event_virtual_location', true ) );
+	$organiser              = esc_html( get_post_meta( get_the_ID(), 'event_organiser', true ) );
+	$organiser_link         = esc_url( get_post_meta( get_the_ID(), 'event_organiser_link', true ) );
+	$notes			        = esc_html( get_post_meta( get_the_ID(), 'event_notes', true ) );
+	$toggle_ticketing       = esc_html( get_post_meta( get_the_ID(), 'event_ticket_toggle', true ) );
+	$tickets	            = esc_html( get_post_meta( get_the_ID(), 'event_ticket_types', true ) );
 
 	if ( $dates ) {
 
 		$output .= '<div class="entry-meta entry-meta-table event-entry-meta">';
 
 			$output .= '<div class="meta-table-header">';
-			$output .= '<span class="title ' . $heading_size . '">Event details</span>';
+			$output .= '<span class="title ' . $heading_size . '">' . $heading_text . '</span>';
 			$output .= '</div>';
 
-			$output .= '<div class="meta-group dates">';
+			$output .= '<div class="meta-table-wrap">';
 
-				$output .= '<div class="group-label">';
-					$output .= '<span class="label">';
-					$output .= ( $dates > 1 ) ? 'Dates' : 'Date';
-					$output .= '</span>';
+				$output .= '<div class="meta-group dates">';
+
+					$output .= '<div class="group-label">';
+						$output .= '<i class="icon dates"></i>';
+						$output .= '<span class="label">';
+						$output .= ( $dates > 1 ) ? 'Dates' : 'Date';
+						$output .= '</span>';
+					$output .= '</div>';
+
+					$output .= '<div class="group-content">';
+						$output .= orgnk_events_entry_schedule();
+					$output .= '</div>';
+
 				$output .= '</div>';
 
-				$output .= '<div class="group-content">';
-					$output .= orgnk_events_entry_schedule();
-				$output .= '</div>';
+				if ( ( $type === 'offline' || $type === 'mixed' ) && $venue_id ) {
+
+					$output .= '<div class="meta-group venue">';
+
+						$output .= '<div class="group-label">';
+							$output .= '<i class="icon venue"></i>';
+							$output .= '<span class="label">Venue</span>';
+						$output .= '</div>';
+
+						$output .= '<div class="group-content">';
+							$output .= orgnk_events_entry_venue();
+						$output .= '</div>';
+
+					$output .= '</div>';
+				}
+
+				if ( ( $type === 'online' || $type === 'mixed' ) && $virtual_location ) {
+					$output .= '<div class="meta-group virtual-location">';
+
+						$output .= '<div class="group-label">';
+							$output .= '<i class="icon virtual-location"></i>';
+							$output .= '<span class="label">Watch online</span>';
+						$output .= '</div>';
+
+						$output .= '<div class="group-content">';
+							$output .= '<a class="event-url" href="' . $virtual_location . '" target="_blank" rel="noopener">' . $virtual_location . '</a>';
+						$output .= '</div>';
+
+					$output .= '</div>';
+				}
+
+				if ( $toggle_ticketing && $tickets ) {
+
+					$output .= '<div class="meta-group tickets">';
+
+						$output .= '<div class="group-label">';
+							$output .= '<i class="icon tickets"></i>';
+							$output .= '<span class="label">Tickets</span>';
+						$output .= '</div>';
+
+						$output .= '<div class="group-content">';
+							$output .= orgnk_events_entry_ticket_types();
+						$output .= '</div>';
+
+					$output .= '</div>';
+				}
+
+				if ( $organiser ) {
+					$output .= '<div class="meta-group organiser">';
+
+						$output .= '<div class="group-label">';
+							$output .= '<i class="icon organiser"></i>';
+							$output .= '<span class="label">Organiser</span>';
+						$output .= '</div>';
+
+						$output .= '<div class="group-content">';
+							if ( $organiser_link ) {
+								$output .= '<a class="organiser-name organiser-link" href="' . $organiser_link . '" target="_blank" rel="noopener">' . $organiser . '</a>';
+							} else {
+								$output .= '<span class="organiser-name">' . $organiser . '</span>';
+							}
+						$output .= '</div>';
+
+					$output .= '</div>';
+				}
+
+				if ( $notes ) {
+
+					$output .= '<div class="meta-group notes">';
+
+						$output .= '<div class="group-label">';
+							$output .= '<i class="icon notes"></i>';
+							$output .= '<span class="label">Notes</span>';
+						$output .= '</div>';
+
+						$output .= '<div class="group-content">';
+							$output .= $notes;
+						$output .= '</div>';
+
+					$output .= '</div>';
+				}
 
 			$output .= '</div>';
-
-			if ( ( $type === 'offline' || $type === 'mixed' ) && $venue_id ) {
-
-				$output .= '<div class="meta-group venue">';
-
-					$output .= '<div class="group-label">';
-						$output .= '<span class="label">Venue</span>';
-					$output .= '</div>';
-
-					$output .= '<div class="group-content">';
-						$output .= orgnk_events_entry_venue();
-					$output .= '</div>';
-
-				$output .= '</div>';
-			}
-			
-			if ( ( $type === 'online' || $type === 'mixed' ) && $virtual_location ) {
-				$output .= '<div class="meta-group virtual-location">';
-
-					$output .= '<div class="group-label">';
-						$output .= '<span class="label">Watch online</span>';
-					$output .= '</div>';
-
-					$output .= '<div class="group-content">';
-						$output .= '<a class="event-url" href="' . $virtual_location . '" target="_blank" rel="noopener">' . $virtual_location . '</a>';
-					$output .= '</div>';
-
-				$output .= '</div>';
-			}
-
-			if ( $toggle_ticketing && $tickets ) {
-
-				$output .= '<div class="meta-group tickets">';
-
-					$output .= '<div class="group-label">';
-						$output .= '<span class="label">Tickets</span>';
-					$output .= '</div>';
-
-					$output .= '<div class="group-content">';
-						$output .= orgnk_events_entry_ticket_types();
-					$output .= '</div>';
-
-				$output .= '</div>';
-			}
-
-			if ( $organiser ) {
-				$output .= '<div class="meta-group organiser">';
-
-					$output .= '<div class="group-label">';
-						$output .= '<span class="label">Organiser</span>';
-					$output .= '</div>';
-
-					$output .= '<div class="group-content">';
-						if ( $organiser_link ) {
-							$output .= '<a class="organiser-name organiser-link" href="' . $organiser_link . '" target="_blank" rel="noopener">' . $organiser . '</a>';
-						} else {
-							$output .= '<span class="organiser-name">' . $organiser . '</span>';
-						}
-					$output .= '</div>';
-
-				$output .= '</div>';
-			}
-
-			if ( $notes ) {
-
-				$output .= '<div class="meta-group notes">';
-
-					$output .= '<div class="group-label">';
-						$output .= '<span class="label">Notes</span>';
-					$output .= '</div>';
-
-					$output .= '<div class="group-content">';
-						$output .= $notes;
-					$output .= '</div>';
-
-				$output .= '</div>';
-			}
 		$output .= '</div>';
 	}
+
 	return $output;
 }

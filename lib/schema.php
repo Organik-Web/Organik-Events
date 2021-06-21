@@ -10,7 +10,7 @@ function orgnk_single_event_schema() {
 
     if ( is_singular( ORGNK_EVENTS_CPT_NAME ) ) {
 
-        // Event variables
+        // Post meta variables
         $featured_image         = esc_url( get_the_post_thumbnail_url( get_the_ID(), 'full' ) );
         $description            = esc_html( get_post_meta( get_the_ID(), 'entry_subtitle', true ) );
         $date_count             = esc_html( get_post_meta( get_the_ID(), 'event_dates', true ) );
@@ -64,7 +64,7 @@ function orgnk_single_event_schema() {
                     if ( $venue_id ) {
 
                         // Venue variables
-                        $street_address         = esc_html( get_post_meta( $venue_id, 'venue_street_address', true ) );
+                        $street_address         = esc_html( get_post_meta( $venue_id, 'venue_address', true ) );
                         $suburb                 = esc_html( get_post_meta( $venue_id, 'venue_suburb', true ) );
                         $post_code              = esc_html( get_post_meta( $venue_id, 'venue_post_code', true ) );
                         $region                 = esc_html( get_post_meta( $venue_id, 'venue_region', true ) );
@@ -79,7 +79,7 @@ function orgnk_single_event_schema() {
                                 'addressLocality'   => $suburb,
                                 'postalCode'        => $post_code,
                                 'addressRegion'     => $region,
-                                'addressRCountry'   => $country
+                                'addressCountry'   => $country
                             )
                         );
                     }
@@ -233,8 +233,7 @@ function orgnk_single_event_schema() {
 
         // Finally, check if there is any compiled schema to return
         if ( $schema ) {
-            // var_dump( json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT ) );
-            return '<script type="application/ld+json" class="organik-events-schema">' . json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT ) . '</script>';
+            return '<script type="application/ld+json" class="organik-events-schema">' . json_encode( $schema, JSON_PRETTY_PRINT ) . '</script>';
         }
     }
 }
