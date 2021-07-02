@@ -7,8 +7,9 @@
  * orgnk_events_entry_schedule()
  * Lists the event times and dates in a neat format
  * Can be limited to only show the first date for an event by passing $first = true
+ * Can be limited to only display future events by passing $exclude_past = true
  */
-function orgnk_events_entry_schedule( $first = false, $date_size = false ) {
+function orgnk_events_entry_schedule( $first = false, $date_size = false, $exclude_past = false) {
 
 	$output = NULL;
 	$date_class = ( $date_size ) ? ' ' . $date_size : NULL;
@@ -37,53 +38,59 @@ function orgnk_events_entry_schedule( $first = false, $date_size = false ) {
 			$end_time 				= ( $event_end ) ? date( 'g:i a', $event_end ) : NULL;
 			$end_date 				= ( $event_end ) ? date( 'j F Y', $event_end ) : NULL;
 
-			if ( $event_end ) {
-				$current_event = $event_end;
+			// Check if exclude_past events is set to true, if it is set to true set current event check to always be in the future
+			// Else set the current event depending on the start/end date
+			if ( $exclude_past === false ) {
+				$current_event = strtotime($time + 3600);  // Add 1 hour
 			} else {
-				$current_event = $event_start;
+				if ( $event_end ) {
+					$current_event = $event_end;
+				} else {
+					$current_event = $event_start;
+				}
 			}
 			$now = time();
-			// Check if currently looped event hasn't occured
+
+			// Check if current_event has occured
 			if ( $current_event > $now ) {
 
+				// Start date and time is the bare minimum needed to run this function
+				if ( $start_time && $start_date ) {
 
-			// Start date and time is the bare minimum needed to run this function
-			if ( $start_time && $start_date ) {
+					$output .= '<' . $li . ' class="event-date' . $date_class . '">';
+					$output .= $start_time;
 
-				$output .= '<' . $li . ' class="event-date' . $date_class . '">';
-				$output .= $start_time;
-
-				if ( $end_time && $end_date === $start_date ) {
-					$output .= ' - '; // Time seperator
-					$output .= $end_time;
-				}
-
-				$output .= ', '; // Time/date seperator
-				$output .= $start_date;
-
-				if ( $end_date && $end_date !== $start_date ) {
-					$output .= ' - '; // Time seperator
-
-					if ( $end_time ) {
+					if ( $end_time && $end_date === $start_date ) {
+						$output .= ' - '; // Time seperator
 						$output .= $end_time;
-						$output .= ', '; // Time/date seperator
 					}
 
-					$output .= $end_date;
-				}
+					$output .= ', '; // Time/date seperator
+					$output .= $start_date;
 
-				$output .= '</' . $li . '>';
-			}
+					if ( $end_date && $end_date !== $start_date ) {
+						$output .= ' - '; // Time seperator
 
-			if ( $first === true ) {
-				if ( $dates > 1 ) {
-					$output .= '<span class="more-dates">+ more dates</span>';
+						if ( $end_time ) {
+							$output .= $end_time;
+							$output .= ', '; // Time/date seperator
+						}
+
+						$output .= $end_date;
+					}
+
+					$output .= '</' . $li . '>';
+
+					if ( $first === true ) {
+						if ( $dates > 1 ) {
+							$output .= '<span class="more-dates">+ more dates</span>';
+						}
+						// End the loop early to only return the first date
+						if ( $i++ == 0 ) break;
+					}
 				}
-				// End the loop early to only return the first date
-				if ( $i++ == 0 ) break;
 			}
 		}
-	}
 		$output .= '</' . $ul . '>';
 	}
 	elseif ( $date_type === 'recurring') {
@@ -94,14 +101,14 @@ function orgnk_events_entry_schedule( $first = false, $date_size = false ) {
 }
 
 //=======================================================================================================================================================
-
-/**
+/*
  * orgnk_events_recurring_format_pretty()
  * Outputs a recurring events start & finish time in a neat format
  */
 function orgnk_events_recurring_format_pretty() {
 	$date_type   			= esc_html( get_post_meta( get_the_ID(), 'date_type', true ) );
 	$output					= null;
+
 	if ( $date_type === 'recurring' ) {
 		$output					.= '<span class="event-date">';
 		$event_frequency		= esc_html( get_post_meta( orgnk_get_the_ID(), 'event_frequency', true ) );
@@ -128,13 +135,13 @@ function orgnk_events_recurring_format_pretty() {
 
 //=======================================================================================================================================================
 /**
- * orgnk_events_format_unix_date()
+ * orgnk_events_get_next_unix_date()
  * Checks a recurring events start time and compares it to the current time
  * Depending on the time set it will add the next events start and end time to an array
- * Returns scheduled events as is in database
+ * For Scheduled events use orgnk_events_get_next_scheduled() to return next scheduled event
  * Stores dates in a unix timestamp format in an array
  */
-function orgnk_events_format_unix_date( $id = null ) {
+function orgnk_events_get_next_unix_date( $id = null ) {
 	// Return early if no id is provided
 	if ( ! $id ) return;
 	$output					= [];
@@ -192,6 +199,7 @@ function orgnk_events_get_next_scheduled( $id = null ) {
 
 $date_count = esc_html( get_post_meta( $id, 'event_dates', true ) );
 
+	// Loop over dates to check whether the event has occurred or not
 	for ( $i = 0; $i < $date_count; $i ++ ) {
 		$event_date_start = esc_html( get_post_meta( $id, 'event_dates_' . $i . '_start', true ) );
 		$event_date_end = esc_html( get_post_meta( $id, 'event_dates_' . $i . '_end', true ) );
@@ -201,8 +209,10 @@ $date_count = esc_html( get_post_meta( $id, 'event_dates', true ) );
 		} else {
 			$current_event = $event_date_start;
 		}
+
 		$current_event = strtotime( $current_event );
 		$now = time();
+		// When a date that hasn't occurred is found store it in an array and break out of loop
 		if ( $current_event > $now ) {
 			$event_start_unix = strtotime( esc_html( get_post_meta( $id, 'event_dates_' . $i . '_start', true ) ) );
 			$event_end_unix = strtotime( esc_html( get_post_meta( $id, 'event_dates_' . $i . '_end', true ) ) );
