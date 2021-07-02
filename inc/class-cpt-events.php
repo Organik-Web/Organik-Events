@@ -360,7 +360,7 @@ class Organik_Events {
 	 * Used to change recurring events dates/times based on whether they have occured yet
 	 */
 	public function orgnk_events_set_next_occurrence() {
-		$event_times = orgnk_events_format_unix_date( get_the_ID() );
+		$event_times = orgnk_events_get_next_unix_date( get_the_ID() );
 		update_post_meta( get_the_ID(), 'next_event_start_date', $event_times['start_time'] );
 		update_post_meta( get_the_ID(), 'next_event_end_date', $event_times['end_time'] );
 	}
