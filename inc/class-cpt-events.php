@@ -50,9 +50,9 @@ class Organik_Events {
 		// Add a notice to the admin list view for this CPT
 		add_action( 'admin_notices', array( $this, 'orgnk_events_cpt_admin_table_notice' ) );
 
-		// Register a custom CRON event to automatically set expired events status to draft
-		add_action( 'init', array( $this, 'orgnk_events_cron_schedule_remove_expired' ) );
-		add_action( 'orgnk_events_remove_expired', array( $this, 'orgnk_events_remove_expired_task' ) );
+		// Register a custom CRON event to call functions that updates recurring events dates & automatically set expired events to draft
+		add_action( 'init', array( $this, 'orgnk_events_register_cron' ) );
+		add_action( 'orgnk_events_cron_schedule', array( $this, 'orgnk_events_cron_tasks' ) );
 
 		// Modify the post type archive query
 		add_action( 'pre_get_posts', array( $this, 'orgnk_events_cpt_archive_query' ) );
@@ -62,6 +62,8 @@ class Organik_Events {
 
 		// Add schema for this post type to the document head
 		add_action( 'wp_head', array( $this, 'orgnk_events_cpt_schema_head' ) );
+
+		add_action( 'save_post', array($this, 'orgnk_events_set_next_occurrence' ), 10, 3);
 
 		// Register Venues CPT after this one has been setup
 		new Organik_Events_Venues();
@@ -191,8 +193,8 @@ class Organik_Events {
 	public function orgnk_events_cpt_admin_table_content( $column_name, $post_id ) {
 
 		if ( $column_name == 'event_first_date' ) {
-			$first_date = strtotime( esc_html( get_post_meta( $post_id, 'event_dates_0_start', true ) ) );
-			$first_date = date( 'd F Y', $first_date );
+			$first_date = esc_html( get_post_meta( $post_id, 'next_event_start_date', true ) ) ;
+			$first_date = date("F j, Y, g:i a", $first_date );
 			echo $first_date;
 		}
 
@@ -220,7 +222,7 @@ class Organik_Events {
 		$orderby = $query->get( 'orderby' );
 
 		if ( isset( $orderby ) && 'event_first_date' == $orderby ) {
-			$query->set( 'meta_key', 'event_dates_0_start' );
+			$query->set( 'meta_key', 'next_event_start_date' );
 			$query->set( 'orderby', 'meta_value' );
 		}
 	}
@@ -246,19 +248,6 @@ class Organik_Events {
 	}
 
 	/**
-	 * orgnk_events_cron_schedule_remove_expired()
-	 * Register a custom CRON event on init to check for events to draft hourly
-	 */
-	public function orgnk_events_cron_schedule_remove_expired() {
-
-		$timestamp = wp_next_scheduled( 'orgnk_events_remove_expired' );
-
-		if ( $timestamp == false ) {
-			wp_schedule_event( time(), 'hourly', 'orgnk_events_remove_expired' );
-		}
-	}
-
-	/**
 	 * orgnk_events_remove_expired_task()
 	 * Handle drafting of events periodically
 	 */
@@ -272,32 +261,35 @@ class Organik_Events {
 		) );
 
 		foreach ( $events as $event ) {
+			$date_type		= esc_html( get_post_meta( $event, 'date_type', true ) );
+			if( $date_type === 'scheduled' ) {
 
-			$expiration_date = NULL;
-			$date_count = esc_html( get_post_meta( $event, 'event_dates', true ) );
-			$i = $date_count - 1; // Subtract one from count to get correct interger
-			$last_date_start = esc_html( get_post_meta( $event, 'event_dates_' . $i . '_start', true ) );
-			$last_date_end = esc_html( get_post_meta( $event, 'event_dates_' . $i . '_end', true ) );
+				$expiration_date = NULL;
+				$date_count = esc_html( get_post_meta( $event, 'event_dates', true ) );
+				$i = $date_count -1; // Subtract one from count to get correct interger
+				$last_date_start = esc_html( get_post_meta( $event, 'event_dates_' . $i . '_start', true ) );
+				$last_date_end = esc_html( get_post_meta( $event, 'event_dates_' . $i . '_end', true ) );
 
-			if ( $last_date_end ) {
-				$expiration_date = $last_date_end;
-			} else {
-				$expiration_date = $last_date_start;
-			}
+				if ( $last_date_end ) {
+					$expiration_date = $last_date_end;
+				} else {
+					$expiration_date = $last_date_start;
+				}
 
-			// Bail if no expire date set
-			if ( ! $expiration_date ) {
-				return;
-			}
+				// Bail if no expire date set
+				if ( ! $expiration_date ) {
+					return;
+				}
 
-			$expiration_date = strtotime( $expiration_date );
-			$now = time();
+				$expiration_date = strtotime( $expiration_date );
+				$now = time();
 
-			if ( $expiration_date <= $now ) {
-				wp_update_post( array(
-					'ID'          	=> $event,
-					'post_status' 	=> 'draft'
-				) );
+				if ( $expiration_date <= $now ) {
+					wp_update_post( array(
+						'ID'          	=> $event,
+						'post_status' 	=> 'draft'
+					) );
+				}
 			}
 		}
 	}
@@ -310,7 +302,7 @@ class Organik_Events {
 
 		if ( $query->is_post_type_archive( ORGNK_EVENTS_CPT_NAME ) && ! is_admin() && $query->is_main_query() ) {
 
-			$query->set( 'meta_key', 'event_dates_0_start' );
+			$query->set( 'meta_key', 'next_event_start_date' );
 			$query->set( 'orderby', 'meta_value' );
 			$query->set( 'order', 'ASC' );
 		}
@@ -325,7 +317,7 @@ class Organik_Events {
 	public function orgnk_events_sitemap_get_posts_arguments( $args ) {
 
 		if ( $args['post_type'] === 'event' ) {
-			$args['meta_key'] = 'event_dates_0_start';
+			$args['meta_key'] = 'next_event_start_date';
 			$args['orderby'] = 'meta_value';
 			$args['order'] = 'ASC';
 		}
@@ -347,5 +339,38 @@ class Organik_Events {
 		}
 
 		echo $schema_script;
+	}
+
+	/**
+	 * orgnk_events_register_cron()
+	 * Register a custom CRON event on init to call cron tasks hourly
+	 */
+	public function orgnk_events_register_cron() {
+
+		$timestamp = wp_next_scheduled( 'orgnk_events_cron_schedule' );
+
+		if ( $timestamp == false ) {
+			wp_schedule_event( time(), 'hourly', 'orgnk_events_cron_schedule' );
+		}
+	}
+
+	/**
+	 * orgnk_events_set_next_occurrence()
+	 * Updates the date/time of an events post meta
+	 * Used to change recurring events dates/times based on whether they have occured yet
+	 */
+	public function orgnk_events_set_next_occurrence() {
+		$event_times = orgnk_events_format_unix_date( get_the_ID() );
+		update_post_meta( get_the_ID(), 'next_event_start_date', $event_times['start_time'] );
+		update_post_meta( get_the_ID(), 'next_event_end_date', $event_times['end_time'] );
+	}
+
+	/**
+	 * orgnk_events_cron_tasks()
+	 * Register a custom CRON event on init to check for events to draft hourly & updated next occurence of event
+	 */
+	public function orgnk_events_cron_tasks() {
+		$this->orgnk_events_remove_expired_task();
+		$this->orgnk_events_set_next_occurrence();
 	}
 }

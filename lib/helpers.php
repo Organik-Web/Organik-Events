@@ -19,9 +19,10 @@ function orgnk_events_entry_schedule( $first = false, $date_size = false ) {
 	$li = ( $first === true ) ? 'span' : 'li';
 
 	// Get dates
+	$date_type   			= esc_html( get_post_meta( get_the_ID(), 'date_type', true ) );
 	$dates             		= esc_html( get_post_meta( get_the_ID(), 'event_dates', true ) );
 
-	if ( $dates ) {
+	if ( $dates && $date_type != 'recurring') {
 
 		$output .= '<' . $ul . ' class="event-schedule' . $type_class . '">';
 
@@ -35,6 +36,16 @@ function orgnk_events_entry_schedule( $first = false, $date_size = false ) {
 			$event_end 				= strtotime( esc_html( get_post_meta( get_the_ID(), 'event_dates_' . $i . '_end', true ) ) );
 			$end_time 				= ( $event_end ) ? date( 'g:i a', $event_end ) : NULL;
 			$end_date 				= ( $event_end ) ? date( 'j F Y', $event_end ) : NULL;
+
+			if ( $event_end ) {
+				$current_event = $event_end;
+			} else {
+				$current_event = $event_start;
+			}
+			$now = time();
+			// Check if currently looped event hasn't occured
+			if ( $current_event > $now ) {
+
 
 			// Start date and time is the bare minimum needed to run this function
 			if ( $start_time && $start_date ) {
@@ -68,16 +79,138 @@ function orgnk_events_entry_schedule( $first = false, $date_size = false ) {
 				if ( $dates > 1 ) {
 					$output .= '<span class="more-dates">+ more dates</span>';
 				}
-
 				// End the loop early to only return the first date
 				if ( $i++ == 0 ) break;
 			}
 		}
-
+	}
 		$output .= '</' . $ul . '>';
+	}
+	elseif ( $date_type === 'recurring') {
+		$output = orgnk_events_recurring_format_pretty();
 	}
 
     return $output;
+}
+
+//=======================================================================================================================================================
+
+/**
+ * orgnk_events_recurring_format_pretty()
+ * Outputs a recurring events start & finish time in a neat format
+ */
+function orgnk_events_recurring_format_pretty() {
+	$date_type   			= esc_html( get_post_meta( get_the_ID(), 'date_type', true ) );
+	$output					= null;
+	if ( $date_type === 'recurring' ) {
+		$output					.= '<span class="event-date">';
+		$event_frequency		= esc_html( get_post_meta( orgnk_get_the_ID(), 'event_frequency', true ) );
+
+		if ( $event_frequency === 'daily' ) {
+			$event_start 			= strtotime( esc_html( get_post_meta( get_the_ID(), 'event_daily_start', true ) ) );
+			$start_time 			= ( $event_start ) ? date( 'g:i a', $event_start ) : NULL;
+			$event_end 				= strtotime( esc_html( get_post_meta( get_the_ID(), 'event_daily_end', true ) ) );
+			$end_time 				= ( $event_end ) ? date( 'g:i a', $event_end ) : NULL;
+			$output 				.= 'Every day between: ' . $start_time . ' and ' . $end_time;
+
+		} elseif ( $event_frequency === 'weekly' ) {
+			$event_day 				= date('l', strtotime( esc_html( get_post_meta( get_the_ID(), 'event_day', true ) ) ) );
+			$event_start 			= strtotime( esc_html( get_post_meta( get_the_ID(), 'event_weekly_start', true ) ) );
+			$start_time 			= ( $event_start ) ? date( 'g:i a', $event_start ) : NULL;
+			$event_end 				= strtotime( esc_html( get_post_meta( get_the_ID(), 'event_weekly_end', true ) ) );
+			$end_time 				= ( $event_end ) ? date( 'g:i a', $event_end ) : NULL;
+			$output 				.=  $start_time . ', every ' . $event_day;
+		}
+		$output	.= '</span>';
+		return $output;
+	}
+}
+
+//=======================================================================================================================================================
+/**
+ * orgnk_events_format_unix_date()
+ * Checks a recurring events start time and compares it to the current time
+ * Depending on the time set it will add the next events start and end time to an array
+ * Returns scheduled events as is in database
+ * Stores dates in a unix timestamp format in an array
+ */
+function orgnk_events_format_unix_date( $id = null ) {
+	// Return early if no id is provided
+	if ( ! $id ) return;
+	$output					= [];
+	$date_type   			= esc_html( get_post_meta( $id, 'date_type', true ) );
+
+	if ( $date_type === 'recurring' ) {
+
+		$event_frequency		= esc_html( get_post_meta( $id, 'event_frequency', true ) );
+
+		if ( $event_frequency === 'daily' ) {
+			$event_start_unix		= strtotime( esc_html( get_post_meta( $id, 'event_daily_start', true ) ) );
+			$event_start_time		= date( 'g:i a', $event_start_unix );
+			$event_end_unix			= strtotime( esc_html( get_post_meta( $id, 'event_daily_end', true ) ) );
+			$event_end_time			= date( 'g:i a', $event_end_unix );
+			$output['start_time'] 	= strtotime( 'now '. $event_start_time );
+			$output['end_time']		= strtotime( 'now '. $event_end_time );
+
+		} elseif ( $event_frequency === 'weekly' ) {
+			// Current time variables
+			$current_time			= strtotime( 'now' );
+			$current_day			= date( 'l', $current_time );
+			// Event meta variables
+			$event_day 				= date( 'l', strtotime( esc_html( get_post_meta( $id, 'event_day', true ) ) ) );
+			$event_start_unix		= strtotime( esc_html( get_post_meta( $id, 'event_weekly_start', true ) ) );
+			$event_start 			= ( $event_start_unix ) ? date( 'g:i a', $event_start_unix ) : NULL;
+			$event_end_time_unix	= strtotime( esc_html( get_post_meta( $id, 'event_weekly_end', true ) ) );
+			$event_end				= ( $event_end_time_unix ) ? date( 'g:i a', $event_end_time_unix ) : NULL;
+
+			if ( ( $event_day === $current_day )  && ( $current_time < $event_end_time_unix ) ) {
+				$event_start_time 		= strtotime( 'today'  . $event_start );
+				$event_end_time			= strtotime( 'today'  . $event_end );
+			} else {
+				$event_start_time 		= strtotime( 'next ' . $event_day . $event_start );
+				$event_start_time 		= strtotime( 'next ' . $event_day . $event_end );
+			}
+
+			$output['start_time'] 	= $event_start_time;
+			$output['end_time']		= $event_start_time;
+		}
+
+	} else {
+		$output = orgnk_events_get_next_scheduled($id);
+		}
+	return $output;
+}
+
+
+//=======================================================================================================================================================
+
+/**
+ * orgnk_events_get_next_scheduled()
+ * Retrurns the next event date for a scheduled event
+ */
+function orgnk_events_get_next_scheduled( $id = null ) {
+
+$date_count = esc_html( get_post_meta( $id, 'event_dates', true ) );
+
+	for ( $i = 0; $i < $date_count; $i ++ ) {
+		$event_date_start = esc_html( get_post_meta( $id, 'event_dates_' . $i . '_start', true ) );
+		$event_date_end = esc_html( get_post_meta( $id, 'event_dates_' . $i . '_end', true ) );
+
+		if ( $event_date_end ) {
+			$current_event = $event_date_end;
+		} else {
+			$current_event = $event_date_start;
+		}
+		$current_event = strtotime( $current_event );
+		$now = time();
+		if ( $current_event > $now ) {
+			$event_start_unix = strtotime( esc_html( get_post_meta( $id, 'event_dates_' . $i . '_start', true ) ) );
+			$event_end_unix = strtotime( esc_html( get_post_meta( $id, 'event_dates_' . $i . '_end', true ) ) );
+			$output['start_time'] 	= $event_start_unix;
+			$output['end_time']		= $event_end_unix;
+			return $output;
+		}
+	}
 }
 
 //=======================================================================================================================================================
@@ -263,7 +396,8 @@ function orgnk_events_entry_venue( $short = false ) {
  */
 function orgnk_events_entry_tickets_button( $button_text = 'Book now' ) {
 
-	$output				= null;
+	$output				= NULL;
+
 	$event_status		= esc_html( get_post_meta( get_the_ID(), 'event_status', true ) );
 	$ticket_status		= esc_html( get_post_meta( get_the_ID(), 'event_ticket_status', true ) );
 	$link				= esc_url( get_post_meta( get_the_ID(), 'event_ticket_link', true ) );

@@ -8,12 +8,15 @@ function orgnk_single_event_schema() {
     $schema = NULL;
     $sub_schema = array();
 
+
     if ( is_singular( ORGNK_EVENTS_CPT_NAME ) ) {
 
         // Post meta variables
         $featured_image         = esc_url( get_the_post_thumbnail_url( get_the_ID(), 'full' ) );
         $description            = esc_html( get_post_meta( get_the_ID(), 'entry_subtitle', true ) );
-        $date_count             = esc_html( get_post_meta( get_the_ID(), 'event_dates', true ) );
+        $date_type              = esc_html( get_post_meta( get_the_ID(), 'date_type', true ) );
+        // If date type is recurring set date count to 1 else retrieve date count from post meta
+        $date_count             = ( $date_type === 'recurring' ) ? 1: esc_html( get_post_meta( get_the_ID(), 'event_dates', true ) );
         $type                   = esc_html( get_post_meta( get_the_ID(), 'event_type', true ) );
         $venue_id               = esc_html( get_post_meta( get_the_ID(), 'event_venue', true ) );
         $virtual_location       = esc_url( get_post_meta( get_the_ID(), 'event_virtual_location', true ) );
@@ -32,9 +35,18 @@ function orgnk_single_event_schema() {
 
             // Loop through repeaters
             for ( $i = 0; $i < $date_count; $i++ ) {
+                // If the date type is recurring get the event start and finish times from the next event date post meta fields
+                // Else retrieve date from the event dates fields
+                if ( $date_type === 'recurring' ) {
+                    $event_start            = esc_html( get_post_meta( get_the_ID(), 'next_event_start_date', true ) );
+                    $event_end              = esc_html( get_post_meta( get_the_ID(), 'next_event_end_date', true ) );
+                    $event_end 				= ( $event_start ) ? date( 'g:i a', $event_start ) : NULL;
+                    $event_end 				= ( $event_end ) ? date( 'g:i a', $event_end ) : NULL;
 
-                $event_start            = esc_html( get_post_meta( get_the_ID(), 'event_dates_' . $i . '_start', true ) );
-                $event_end              = esc_html( get_post_meta( get_the_ID(), 'event_dates_' . $i . '_end', true ) );
+                } else {
+                    $event_start            = esc_html( get_post_meta( get_the_ID(), 'event_dates_' . $i . '_start', true ) );
+                    $event_end              = esc_html( get_post_meta( get_the_ID(), 'event_dates_' . $i . '_end', true ) );
+                }
 
                 // First, check minimum required parameters to generate schema for each date
                 if ( $event_start && ( $venue_id || $virtual_location ) ) {
@@ -108,7 +120,7 @@ function orgnk_single_event_schema() {
                             if ( $virtual_location_schema ) {
                                 $event_schema ['location'] = $virtual_location_schema;
                             }
-                            
+
                         }  elseif ( $type === 'mixed' ) {
                             $event_schema['eventAttendanceMode'] = 'https://schema.org/MixedEventAttendanceMode';
 
@@ -163,7 +175,7 @@ function orgnk_single_event_schema() {
                                 if ( $ticket_link ) {
                                     $offer_schema['url'] = $ticket_link;
                                 }
-        
+
                                 if ( $ticket_status ) {
                                     if ( $ticket_status === 'in-stock' ) {
                                         $offer_schema['availability'] = 'https://schema.org/InStock';
@@ -195,8 +207,8 @@ function orgnk_single_event_schema() {
                         if ( $organiser_link ) {
                             $event_schema['organizer']['url'] = $organiser_link;
                         }
-                    } 
-                    
+                    }
+
                     // Otherwise the organiser is this website/business so use their website name and home URL
                     else {
                         $event_schema['organizer'] = array(
@@ -227,10 +239,9 @@ function orgnk_single_event_schema() {
             if ( $date_count > 1 ) {
                 $schema['graph'] = $sub_schema;
             } else {
-                $schema = array_merge( $schema, $sub_schema[0] );
+                $schema = array_merge( $schema, $sub_schema );
             }
         }
-
         // Finally, check if there is any compiled schema to return
         if ( $schema ) {
             return '<script type="application/ld+json" class="organik-events-schema">' . json_encode( $schema, JSON_PRETTY_PRINT ) . '</script>';
