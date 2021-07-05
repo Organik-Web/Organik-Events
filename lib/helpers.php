@@ -40,8 +40,9 @@ function orgnk_events_entry_schedule( $first = false, $date_size = false, $exclu
 
 			// Check if exclude_past events is set to true, if it is set to true set current event check to always be in the future
 			// Else set the current event depending on the start/end date
+			$now = time();
 			if ( $exclude_past === false ) {
-				$current_event = strtotime($time + 3600);  // Add 1 hour
+				$current_event = strtotime($now + 3600);  // Add 1 hour
 			} else {
 				if ( $event_end ) {
 					$current_event = $event_end;
@@ -49,7 +50,6 @@ function orgnk_events_entry_schedule( $first = false, $date_size = false, $exclu
 					$current_event = $event_start;
 				}
 			}
-			$now = time();
 
 			// Check if current_event has occured
 			if ( $current_event > $now ) {
@@ -152,12 +152,10 @@ function orgnk_events_get_next_unix_date( $id = null ) {
 		$event_frequency		= esc_html( get_post_meta( $id, 'event_frequency', true ) );
 
 		if ( $event_frequency === 'daily' ) {
-			$event_start_unix		= strtotime( esc_html( get_post_meta( $id, 'event_daily_start', true ) ) );
-			$event_start_time		= date( 'g:i a', $event_start_unix );
-			$event_end_unix			= strtotime( esc_html( get_post_meta( $id, 'event_daily_end', true ) ) );
-			$event_end_time			= date( 'g:i a', $event_end_unix );
-			$output['start_time'] 	= strtotime( 'now '. $event_start_time );
-			$output['end_time']		= strtotime( 'now '. $event_end_time );
+			$event_start_unix		= strtotime('today ' .  esc_html( get_post_meta( $id, 'event_daily_start', true ) ) );
+			$event_end_unix			= strtotime( 'today ' . esc_html( get_post_meta( $id, 'event_daily_end', true ) ) );
+			$output['start_time'] 	= $event_start_unix;
+			$output['end_time']		= $event_end_unix;
 
 		} elseif ( $event_frequency === 'weekly' ) {
 			// Current time variables
@@ -170,6 +168,7 @@ function orgnk_events_get_next_unix_date( $id = null ) {
 			$event_end_time_unix	= strtotime( esc_html( get_post_meta( $id, 'event_weekly_end', true ) ) );
 			$event_end				= ( $event_end_time_unix ) ? date( 'g:i a', $event_end_time_unix ) : NULL;
 
+			// If the day is equal to the current day and the event has not ended, the event start time is today else it is the next event day
 			if ( ( $event_day === $current_day )  && ( $current_time < $event_end_time_unix ) ) {
 				$event_start_time 		= strtotime( 'today'  . $event_start );
 				$event_end_time			= strtotime( 'today'  . $event_end );
@@ -179,7 +178,7 @@ function orgnk_events_get_next_unix_date( $id = null ) {
 			}
 
 			$output['start_time'] 	= $event_start_time;
-			$output['end_time']		= $event_start_time;
+			$output['end_time']		= $event_end_time;
 		}
 
 	} else {

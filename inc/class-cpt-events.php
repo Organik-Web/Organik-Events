@@ -177,7 +177,7 @@ class Organik_Events {
 		foreach ( $defaults as $key => $value ) {
 			// When we find the date column, slip in the new column before it
 			if ( $key == 'date' ) {
-				$new_order['event_first_date'] = 'First Date';
+				$new_order['event_first_date'] = 'Next Date';
 				$new_order['event_status'] = 'Status';
 			}
 			$new_order[$key] = $value;
@@ -291,6 +291,9 @@ class Organik_Events {
 					) );
 				}
 			}
+			if ( $date_type == 'recurring' ) {
+				$this->orgnk_events_set_next_occurrence($event);
+			}
 		}
 	}
 
@@ -359,10 +362,10 @@ class Organik_Events {
 	 * Updates the date/time of an events post meta
 	 * Used to change recurring events dates/times based on whether they have occured yet
 	 */
-	public function orgnk_events_set_next_occurrence() {
-		$event_times = orgnk_events_get_next_unix_date( get_the_ID() );
-		update_post_meta( get_the_ID(), 'next_event_start_date', $event_times['start_time'] );
-		update_post_meta( get_the_ID(), 'next_event_end_date', $event_times['end_time'] );
+	public function orgnk_events_set_next_occurrence($event) {
+		$event_times = orgnk_events_get_next_unix_date( $event );
+		update_post_meta( $event, 'next_event_start_date', $event_times['start_time'] );
+		update_post_meta( $event, 'next_event_end_date', $event_times['end_time'] );
 	}
 
 	/**
@@ -371,6 +374,5 @@ class Organik_Events {
 	 */
 	public function orgnk_events_cron_tasks() {
 		$this->orgnk_events_remove_expired_task();
-		$this->orgnk_events_set_next_occurrence();
 	}
 }

@@ -40,8 +40,8 @@ function orgnk_single_event_schema() {
                 if ( $date_type === 'recurring' ) {
                     $event_start            = esc_html( get_post_meta( get_the_ID(), 'next_event_start_date', true ) );
                     $event_end              = esc_html( get_post_meta( get_the_ID(), 'next_event_end_date', true ) );
-                    $event_end 				= ( $event_start ) ? date( 'g:i a', $event_start ) : NULL;
-                    $event_end 				= ( $event_end ) ? date( 'g:i a', $event_end ) : NULL;
+                    $event_start            = ( $event_start ) ? date( 'Y-m-d H:i:s', $event_start ) : NULL;
+                    $event_end              = ( $event_end ) ? date( 'Y-m-d H:i:s', $event_end ) : NULL;
 
                 } else {
                     $event_start            = esc_html( get_post_meta( get_the_ID(), 'event_dates_' . $i . '_start', true ) );
