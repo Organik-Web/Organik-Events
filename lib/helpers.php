@@ -174,7 +174,7 @@ function orgnk_events_get_next_unix_date( $id = null ) {
 				$event_end_time			= strtotime( 'today'  . $event_end );
 			} else {
 				$event_start_time 		= strtotime( 'next ' . $event_day . $event_start );
-				$event_start_time 		= strtotime( 'next ' . $event_day . $event_end );
+				$event_end_time 		= strtotime( 'next ' . $event_day . $event_end );
 			}
 
 			$output['start_time'] 	= $event_start_time;
