@@ -305,13 +305,26 @@ class Organik_Events {
 
 		if ( $query->is_post_type_archive( ORGNK_EVENTS_CPT_NAME ) && ! is_admin() && $query->is_main_query() ) {
 
-			$query->set( 'meta_key', 'next_event_start_date' );
 			$query->set( 'orderby', 'meta_value' );
 			$query->set( 'order', 'ASC' );
-		}
+			$meta_query = array([
+						'relation'    => 'OR',
+						'next_event_start_date'    	=> array(
+						'key'     					=> 'next_event_start_date',
+						),
+						'event_featured' 			=> array(
+						'key'       				=> 'event_featured',
+						),
+					],
+					'orderby' => [
+						'event_featured' => 'DESC',
+						'next_event_start_date' => 'ASC',
+					]);
+					$query->set( 'meta_query', $meta_query );
 
-		return $query;
-	}
+				return $query;
+			}
+		}
 
 	/**
 	 * orgnk_events_sitemap_get_posts_arguments()
@@ -320,9 +333,9 @@ class Organik_Events {
 	public function orgnk_events_sitemap_get_posts_arguments( $args ) {
 
 		if ( $args['post_type'] === 'event' ) {
-			$args['meta_key'] = 'next_event_start_date';
+			$args['meta_key'] = 'event_featured';
 			$args['orderby'] = 'meta_value';
-			$args['order'] = 'ASC';
+			$args['order'] = 'DESC';
 		}
 
 		return $args;

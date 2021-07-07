@@ -9,7 +9,7 @@
  * Can be limited to only show the first date for an event by passing $first = true
  * Can be limited to only display future events by passing $exclude_past = true
  */
-function orgnk_events_entry_schedule( $first = false, $date_size = false, $exclude_past = false) {
+function orgnk_events_entry_schedule( $first = false, $date_size = false, $exclude_past = true) {
 
 	$output = NULL;
 	$date_class = ( $date_size ) ? ' ' . $date_size : NULL;
@@ -23,6 +23,7 @@ function orgnk_events_entry_schedule( $first = false, $date_size = false, $exclu
 	$date_type   			= esc_html( get_post_meta( get_the_ID(), 'date_type', true ) );
 	$dates             		= esc_html( get_post_meta( get_the_ID(), 'event_dates', true ) );
 
+	// Check if dates & date type is not recurring
 	if ( $dates && $date_type != 'recurring') {
 
 		$output .= '<' . $ul . ' class="event-schedule' . $type_class . '">';
@@ -31,24 +32,20 @@ function orgnk_events_entry_schedule( $first = false, $date_size = false, $exclu
 
 			// Variables
 			$event_start 			= strtotime( esc_html( get_post_meta( get_the_ID(), 'event_dates_' . $i . '_start', true ) ) );
+			$event_end 				= strtotime( esc_html( get_post_meta( get_the_ID(), 'event_dates_' . $i . '_end', true ) ) );
 			$start_time 			= ( $event_start ) ? date( 'g:i a', $event_start ) : NULL;
 			$start_date 			= ( $event_start ) ? date( 'j F Y', $event_start ) : NULL;
-
-			$event_end 				= strtotime( esc_html( get_post_meta( get_the_ID(), 'event_dates_' . $i . '_end', true ) ) );
 			$end_time 				= ( $event_end ) ? date( 'g:i a', $event_end ) : NULL;
 			$end_date 				= ( $event_end ) ? date( 'j F Y', $event_end ) : NULL;
 
 			// Check if exclude_past events is set to true, if it is set to true set current event check to always be in the future
 			// Else set the current event depending on the start/end date
 			$now = time();
+
 			if ( $exclude_past === false ) {
-				$current_event = strtotime($now + 3600);  // Add 1 hour
+				$current_event = ( time() + 3600 );  // Add 1 hour
 			} else {
-				if ( $event_end ) {
-					$current_event = $event_end;
-				} else {
-					$current_event = $event_start;
-				}
+				$current_event = $event_end;
 			}
 
 			// Check if current_event has occured
@@ -106,28 +103,36 @@ function orgnk_events_entry_schedule( $first = false, $date_size = false, $exclu
  * Outputs a recurring events start & finish time in a neat format
  */
 function orgnk_events_recurring_format_pretty() {
+
 	$date_type   			= esc_html( get_post_meta( get_the_ID(), 'date_type', true ) );
 	$output					= null;
 
 	if ( $date_type === 'recurring' ) {
+
 		$output					.= '<span class="event-date">';
 		$event_frequency		= esc_html( get_post_meta( orgnk_get_the_ID(), 'event_frequency', true ) );
+		$event_start 			= strtotime( esc_html( get_post_meta( get_the_ID(), 'event_start_time', true ) ) );
+		$event_end 				= strtotime( esc_html( get_post_meta( get_the_ID(), 'event_end_time', true ) ) );
+		$start_time 			= ( $event_start ) ? date( 'g:i a', $event_start ) : NULL;
+		$end_time 				= ( $event_end ) ? date( 'g:i a', $event_end ) : NULL;
 
 		if ( $event_frequency === 'daily' ) {
-			$event_start 			= strtotime( esc_html( get_post_meta( get_the_ID(), 'event_daily_start', true ) ) );
-			$start_time 			= ( $event_start ) ? date( 'g:i a', $event_start ) : NULL;
-			$event_end 				= strtotime( esc_html( get_post_meta( get_the_ID(), 'event_daily_end', true ) ) );
-			$end_time 				= ( $event_end ) ? date( 'g:i a', $event_end ) : NULL;
+
 			$output 				.= 'Every day between: ' . $start_time . ' and ' . $end_time;
 
 		} elseif ( $event_frequency === 'weekly' ) {
+
 			$event_day 				= date('l', strtotime( esc_html( get_post_meta( get_the_ID(), 'event_day', true ) ) ) );
-			$event_start 			= strtotime( esc_html( get_post_meta( get_the_ID(), 'event_weekly_start', true ) ) );
-			$start_time 			= ( $event_start ) ? date( 'g:i a', $event_start ) : NULL;
-			$event_end 				= strtotime( esc_html( get_post_meta( get_the_ID(), 'event_weekly_end', true ) ) );
-			$end_time 				= ( $event_end ) ? date( 'g:i a', $event_end ) : NULL;
 			$output 				.=  $start_time . ', every ' . $event_day;
+
+		} elseif ( $event_frequency === 'monthly' ) {
+
+			$event_day 				= date( 'l', strtotime( esc_html( get_post_meta( get_the_ID(), 'event_month_day', true ) ) ) );
+			$event_occurence		= esc_html( get_post_meta( get_the_ID(), 'event_month_occurrence', true ) );
+			$output 				.=  $start_time . ', On the  ' . $event_occurence . ' ' . $event_day . ' of every month';
+
 		}
+
 		$output	.= '</span>';
 		return $output;
 	}
@@ -149,77 +154,144 @@ function orgnk_events_get_next_unix_date( $id = null ) {
 
 	if ( $date_type === 'recurring' ) {
 
-		$event_frequency		= esc_html( get_post_meta( $id, 'event_frequency', true ) );
+		// Set common recurring date variables
+		$current_time				= strtotime( 'now' );
+		$current_month				= date("F");
+		$current_day				= date( 'l', $current_time );
+		$event_frequency			= esc_html( get_post_meta( $id, 'event_frequency', true ) );
+		$event_start_time_unix		= strtotime('today ' .  esc_html( get_post_meta( $id, 'event_start_time', true ) ) );
+		$event_end_time_unix		= strtotime( 'today ' . esc_html( get_post_meta( $id, 'event_end_time', true ) ) );
 
+		// Here we are checking the frequency of an event
+		// There are 3 types of recurring events: daily, weekly and  monthly.
+		// For each of these events we check whether the current time is greater than the end time, if it is we set the next event date as neeed
 		if ( $event_frequency === 'daily' ) {
-			$event_start_unix		= strtotime('today ' .  esc_html( get_post_meta( $id, 'event_daily_start', true ) ) );
-			$event_end_unix			= strtotime( 'today ' . esc_html( get_post_meta( $id, 'event_daily_end', true ) ) );
-			$output['start_time'] 	= $event_start_unix;
-			$output['end_time']		= $event_end_unix;
+
+			if ($current_time >  $event_end_time_unix ) {
+				$event_start_time_unix		= strtotime('tomorrow ' .  esc_html( get_post_meta( $id, 'event_start_time', true ) ) );
+				$event_end_time_unix		= strtotime( 'tomorrow ' . esc_html( get_post_meta( $id, 'event_end_time', true ) ) );
+			}
 
 		} elseif ( $event_frequency === 'weekly' ) {
-			// Current time variables
-			$current_time			= strtotime( 'now' );
-			$current_day			= date( 'l', $current_time );
+
 			// Event meta variables
-			$event_day 				= date( 'l', strtotime( esc_html( get_post_meta( $id, 'event_day', true ) ) ) );
-			$event_start_unix		= strtotime( esc_html( get_post_meta( $id, 'event_weekly_start', true ) ) );
-			$event_start 			= ( $event_start_unix ) ? date( 'g:i a', $event_start_unix ) : NULL;
-			$event_end_time_unix	= strtotime( esc_html( get_post_meta( $id, 'event_weekly_end', true ) ) );
-			$event_end				= ( $event_end_time_unix ) ? date( 'g:i a', $event_end_time_unix ) : NULL;
+			$event_day			= date( 'l', strtotime( esc_html( get_post_meta( $id, 'event_day', true ) ) ) );
+			$event_start		= ( $event_start_time_unix ) ? date( 'g:i a', $event_start_time_unix ) : NULL;
+			$event_end			= ( $event_end_time_unix ) ? date( 'g:i a', $event_end_time_unix ) : NULL;
 
 			// If the day is equal to the current day and the event has not ended, the event start time is today else it is the next event day
 			if ( ( $event_day === $current_day )  && ( $current_time < $event_end_time_unix ) ) {
-				$event_start_time 		= strtotime( 'today'  . $event_start );
-				$event_end_time			= strtotime( 'today'  . $event_end );
+
+				$event_start_time_unix		= strtotime( 'today'  . $event_start );
+				$event_end_time_unix		= strtotime( 'today'  . $event_end );
+
 			} else {
-				$event_start_time 		= strtotime( 'next ' . $event_day . $event_start );
-				$event_end_time 		= strtotime( 'next ' . $event_day . $event_end );
+
+				$event_start_time_unix 		= strtotime( 'next ' . $event_day . $event_start );
+				$event_end_time_unix 		= strtotime( 'next ' . $event_day . $event_end );
+
 			}
 
-			$output['start_time'] 	= $event_start_time;
-			$output['end_time']		= $event_end_time;
+		} elseif ( $event_frequency === 'monthly' ) {
+
+			// Event meta variables
+			$event_day 					= date( 'l', strtotime( esc_html( get_post_meta( $id, 'event_month_day', true ) ) ) );
+			$event_occurence			= esc_html( get_post_meta( $id, 'event_month_occurrence', true ) );
+			$event_start 				= ( $event_start_time_unix ) ? date( 'g:i a', $event_start_time_unix ) : NULL;
+			$event_end					= ( $event_end_time_unix ) ? date( 'g:i a', $event_end_time_unix ) : NULL;
+
+			$event_start_time_unix		= strtotime($event_start , strtotime(' ' . $event_occurence . ' ' . $event_day . ' of ' . $current_month . '') ) ;
+			$event_end_time_unix		= strtotime($event_end , strtotime(' ' . $event_occurence . ' ' . $event_day . ' of ' . $current_month . '') ) ;
+
+			if ( $current_time > $event_end_time_unix ) {
+
+				$event_start            	= ( $event_start_time_unix ) ? date( 'Y-m-d H:i:s', $event_start_time_unix ) : NULL;
+				$event_end              	= ( $event_end_time_unix ) ? date( 'Y-m-d H:i:s', $event_end_time_unix ) : NULL;
+				$event_start_time_unix		= strtotime($event_start . " +1 month");
+				$event_end_time_unix		= strtotime($event_end . " +1 month");
+
+			}
 		}
 
+		// Set output to be returned
+		$output['start_time'] 	= $event_start_time_unix;
+		$output['end_time']		= $event_end_time_unix;
+
 	} else {
-		$output = orgnk_events_get_next_scheduled($id);
+			// Call orgnk_events_get_next_scheduled to return the next scheduled event times
+			$output = orgnk_events_get_next_scheduled($id);
 		}
+
 	return $output;
 }
 
 
 //=======================================================================================================================================================
-
 /**
  * orgnk_events_get_next_scheduled()
- * Retrurns the next event date for a scheduled event
+ * Returns the next event date for a scheduled event
  */
 function orgnk_events_get_next_scheduled( $id = null ) {
 
-$date_count = esc_html( get_post_meta( $id, 'event_dates', true ) );
+	$date_count = esc_html( get_post_meta( $id, 'event_dates', true ) );
 
 	// Loop over dates to check whether the event has occurred or not
 	for ( $i = 0; $i < $date_count; $i ++ ) {
+
+		// Event meta variables
 		$event_date_start = esc_html( get_post_meta( $id, 'event_dates_' . $i . '_start', true ) );
 		$event_date_end = esc_html( get_post_meta( $id, 'event_dates_' . $i . '_end', true ) );
-
-		if ( $event_date_end ) {
-			$current_event = $event_date_end;
-		} else {
-			$current_event = $event_date_start;
-		}
-
-		$current_event = strtotime( $current_event );
+		$current_event = strtotime( $event_date_end );
 		$now = time();
+
 		// When a date that hasn't occurred is found store it in an array and break out of loop
 		if ( $current_event > $now ) {
-			$event_start_unix = strtotime( esc_html( get_post_meta( $id, 'event_dates_' . $i . '_start', true ) ) );
-			$event_end_unix = strtotime( esc_html( get_post_meta( $id, 'event_dates_' . $i . '_end', true ) ) );
-			$output['start_time'] 	= $event_start_unix;
-			$output['end_time']		= $event_end_unix;
+
+			$event_start_time_unix = strtotime( esc_html( get_post_meta( $id, 'event_dates_' . $i . '_start', true ) ) );
+			$event_end_time_unix = strtotime( esc_html( get_post_meta( $id, 'event_dates_' . $i . '_end', true ) ) );
+			$output['start_time'] 	= $event_start_time_unix;
+			$output['end_time']		= $event_end_time_unix;
+
 			return $output;
+
 		}
 	}
+}
+
+
+
+//=======================================================================================================================================================
+/**
+ * orgnk_events_get_posts()
+ * Returns a posts loop which contains event posts
+ * Pass in a $posts_per_page value to change the number of events it returns, the default is 3
+ */
+function orgnk_events_get_posts($posts_per_page = 3) {
+
+	$args = array(
+		'post_type' 		=> 'event',
+		'post_status' 		=> 'publish',
+		'orderby' 			=> 'meta_value',
+		'order' 			=> 'ASC',
+		'meta_query'		=> array([
+							'relation'    => 'OR',
+							'next_event_start_date'    	=> array(
+							'key'     					=> 'next_event_start_date',
+							),
+							'event_featured' 			=> array(
+							'key'       				=> 'event_featured',
+							),
+						],
+						'orderby' => [
+							'event_featured' => 'DESC',
+							'next_event_start_date' => 'ASC',]),
+		'posts_per_page' 	=> $posts_per_page,
+	);
+
+	$posts_loop = new WP_Query( $args );
+
+	return $posts_loop;
+
 }
 
 //=======================================================================================================================================================
