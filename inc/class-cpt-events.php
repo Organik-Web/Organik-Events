@@ -377,8 +377,10 @@ class Organik_Events {
 	 */
 	public function orgnk_events_set_next_occurrence($event) {
 		$event_times = orgnk_events_get_next_unix_date( $event );
-		update_post_meta( $event, 'next_event_start_date', $event_times['start_time'] );
-		update_post_meta( $event, 'next_event_end_date', $event_times['end_time'] );
+		if ( $event_times ) {
+			update_post_meta( $event, 'next_event_start_date', $event_times['start_time'] );
+			update_post_meta( $event, 'next_event_end_date', $event_times['end_time'] );
+		}
 	}
 
 	/**
