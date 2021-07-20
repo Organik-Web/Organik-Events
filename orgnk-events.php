@@ -46,6 +46,7 @@ require_once plugin_dir_path( __FILE__ ) . 'inc/class-cpt-venues.php';
  */
 require_once plugin_dir_path( __FILE__ ) . 'lib/helpers.php';
 require_once plugin_dir_path( __FILE__ ) . 'lib/schema.php';
+require_once plugin_dir_path( __FILE__ ) . 'lib/acf-fields.php';
 
 /**
  * Run the main instance of this plugin

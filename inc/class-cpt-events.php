@@ -67,6 +67,9 @@ class Organik_Events {
 
 		// Register Venues CPT after this one has been setup
 		new Organik_Events_Venues();
+
+		// Register ACF Fields
+		new Organik_Events_ACF_Fields();
 	}
 
 	/**
