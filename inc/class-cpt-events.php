@@ -308,22 +308,28 @@ class Organik_Events {
 
 		if ( $query->is_post_type_archive( ORGNK_EVENTS_CPT_NAME ) && ! is_admin() && $query->is_main_query() ) {
 
-			$query->set( 'orderby', 'meta_value' );
-			$query->set( 'order', 'ASC' );
+
 			$meta_query = array([
-						'relation'    => 'OR',
-						'next_event_start_date'    	=> array(
-						'key'     					=> 'next_event_start_date',
-						),
+						'relation'    => 'AND',
 						'event_featured' 			=> array(
 						'key'       				=> 'event_featured',
+						'type' 						=> 'numeric',
+						'compare'   				=> 'EXISTS',
 						),
-					],
-					'orderby' => [
-						'event_featured' => 'DESC',
-						'next_event_start_date' => 'ASC',
+						'next_event_start_date'    	=> array(
+						'key'     					=> 'next_event_start_date',
+						'type' 						=> 'numeric',
+						'compare'   				=> 'EXISTS',
+						)
 					]);
+
+			$order_by = array(
+				'event_featured' => 'DESC',
+				'next_event_start_date' => 'ASC',
+			);
 					$query->set( 'meta_query', $meta_query );
+					$query->set( 'orderby', $order_by );
+
 
 				return $query;
 			}
