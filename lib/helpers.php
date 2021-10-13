@@ -271,20 +271,24 @@ function orgnk_events_get_posts($posts_per_page = 3) {
 	$args = array(
 		'post_type' 		=> 'event',
 		'post_status' 		=> 'publish',
-		'orderby' 			=> 'meta_value',
-		'order' 			=> 'ASC',
+		'order' 			=> 'DESc',
 		'meta_query'		=> array([
 							'relation'    => 'OR',
+							'event_featured'    	=> array(
+							'key'       				=> 'event_featured',
+							'type' 						=> 'numeric',
+							'compare'   				=> 'EXISTS',
+							),
 							'next_event_start_date'    	=> array(
 							'key'     					=> 'next_event_start_date',
-							),
-							'event_featured' 			=> array(
-							'key'       				=> 'event_featured',
-							),
-						],
-						'orderby' => [
-							'event_featured' => 'DESC',
-							'next_event_start_date' => 'ASC',]),
+							'type' 						=> 'numeric',
+							'compare'   				=> 'EXISTS',
+							)
+						]),
+			'orderby' 		=>  array([
+							'event_featured' 			=> 'DESC',
+							'next_event_start_date' 	=> 'ASC',
+			]),
 		'posts_per_page' 	=> $posts_per_page,
 	);
 
