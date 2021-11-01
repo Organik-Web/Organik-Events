@@ -360,6 +360,26 @@ class Organik_Events_ACF_Fields {
 					'display_format' => 'g:i a',
 					'return_format' => 'g:i a',
 				),
+				// Field - Event Tagline - Text
+				array(
+					'key' 					=> 'field_5f83fcddb5a98a',
+					'label' 				=> 'Event Date Byline',
+					'name' 					=> 'event_date_byline',
+					'type' 					=> 'text',
+					'instructions' 			=> 'Setting this will display a custom text field instead of the date',
+					'required' 				=> 0,
+					'conditional_logic' 	=> 0,
+					'wrapper' 				=> array(
+						'width' 		=> '',
+						'class' 		=> '',
+						'id' 			=> '',
+					),
+					'default_value' 		=> '',
+					'placeholder' 			=> '',
+					'prepend' 				=> '',
+					'append' 				=> '',
+					'maxlength' 			=> '',
+				),
 
 				// Field - Event Details - Tab
 				array(
