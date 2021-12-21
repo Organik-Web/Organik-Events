@@ -300,6 +300,7 @@ class Organik_Events {
 		}
 	}
 
+	//=======================================================================================================================================================
 	/**
 	 * orgnk_events_cpt_archive_query()
 	 * Change the events archive order to order by the event start date meta
@@ -307,7 +308,6 @@ class Organik_Events {
 	public function orgnk_events_cpt_archive_query( $query ) {
 
 		if ( $query->is_post_type_archive( ORGNK_EVENTS_CPT_NAME ) && ! is_admin() && $query->is_main_query() ) {
-
 
 			$meta_query = array([
 						'relation'    => 'AND',
@@ -329,7 +329,6 @@ class Organik_Events {
 			);
 					$query->set( 'meta_query', $meta_query );
 					$query->set( 'orderby', $order_by );
-
 
 				return $query;
 			}

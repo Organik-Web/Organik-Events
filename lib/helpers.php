@@ -271,9 +271,9 @@ function orgnk_events_get_posts($posts_per_page = 3) {
 	$args = array(
 		'post_type' 		=> 'event',
 		'post_status' 		=> 'publish',
-		'order' 			=> 'DESc',
+		'order' 			=> 'DESC',
 		'meta_query'		=> array([
-							'relation'    => 'OR',
+							'relation'    => 'AND',
 							'event_featured'    	=> array(
 							'key'       				=> 'event_featured',
 							'type' 						=> 'numeric',
@@ -285,10 +285,10 @@ function orgnk_events_get_posts($posts_per_page = 3) {
 							'compare'   				=> 'EXISTS',
 							)
 						]),
-			'orderby' 		=>  array([
+			'orderby' 		=>  array(
 							'event_featured' 			=> 'DESC',
 							'next_event_start_date' 	=> 'ASC',
-			]),
+			),
 		'posts_per_page' 	=> $posts_per_page,
 	);
 
