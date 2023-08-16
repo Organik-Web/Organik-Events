@@ -1,0 +1,13 @@
+{
+    "name": "organikweb/events",
+    "description": "Create and manage events",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Organik Web",
+            "email": "hello@organikweb.com.au"
+        }
+    ],
+    "require": {}
+}

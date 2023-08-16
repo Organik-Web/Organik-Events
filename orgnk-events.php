@@ -40,6 +40,7 @@ register_deactivation_hook( __FILE__, 'orgnk_events_deactivate_plugin' );
  */
 require_once plugin_dir_path( __FILE__ ) . 'inc/class-cpt-events.php';
 require_once plugin_dir_path( __FILE__ ) . 'inc/class-cpt-venues.php';
+require_once plugin_dir_path( __FILE__ ) . 'inc/class-tax-events-categories.php';
 
 /**
  * Load helper functions

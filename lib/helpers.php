@@ -125,7 +125,12 @@ function orgnk_events_recurring_format_pretty() {
 			$event_day 				= date('l', strtotime( esc_html( get_post_meta( get_the_ID(), 'event_day', true ) ) ) );
 			$output 				.=  $start_time . ', every ' . $event_day;
 
-		} elseif ( $event_frequency === 'monthly' ) {
+		} elseif ( $event_frequency === 'fortnightly' ) {
+			$event_date_start 			= esc_html( get_post_meta( get_the_ID(), 'next_event_start_date', true ) );
+			$event_start_time_unix 	  = date( 'g:i a, F j, Y', $event_date_start );
+			$output 				.=  $event_start_time_unix;
+
+		}  elseif ( $event_frequency === 'monthly' ) {
 
 			$event_day 				= date( 'l', strtotime( esc_html( get_post_meta( get_the_ID(), 'event_month_day', true ) ) ) );
 			$event_occurence		= esc_html( get_post_meta( get_the_ID(), 'event_month_occurrence', true ) );
@@ -192,6 +197,43 @@ function orgnk_events_get_next_unix_date( $id = null ) {
 
 			}
 
+		} elseif ( $event_frequency === 'fortnightly' ) {
+
+			// Event meta variables
+			// Get the start date of the fortnight from the user
+			$start_date 	= date( 'Y-m-d', strtotime( esc_html( get_post_meta( $id, 'event_fortnight_day', true ) ) ) );
+			$event_start	= ( $event_start_time_unix ) ? date( 'g:i a', $event_start_time_unix ) : NULL;
+			$event_end		= ( $event_end_time_unix ) ? date( 'g:i a', $event_end_time_unix ) : NULL;
+			// Get the current date and time
+			$current_datetime = new DateTime();
+			$event_end_time_unix = strtotime( $event_end . ' ' . $start_date );
+
+			if ( $current_time < $event_end_time_unix ) {
+				$event_start_time_unix = strtotime( $event_start . ' ' . $start_date );
+				$event_end_time_unix = strtotime( $event_end . ' ' . $start_date );
+			} else {
+				// Calculate the number of days between the start date and the current date
+				$days_since_start = $current_datetime->diff(new DateTime($start_date))->days;
+
+				// Calculate the number of fortnights since the start date
+				$fortnights_since_start = floor($days_since_start / 14);
+
+				// Calculate the next occurrence of the event
+				$next_occurrence = date('Y-m-d', strtotime('+' . (2 - ($fortnights_since_start % 2)) . ' week', strtotime($start_date)));
+
+				// Check if the next occurrence has passed
+				if ($next_occurrence <= $current_datetime->format('Y-m-d')) {
+					// Calculate the next occurrence of the event
+					$next_occurrence = date('Y-m-d', strtotime('+2 week', strtotime($next_occurrence)));
+					// Calculate the start and end times for the next occurrence of the event
+					$event_start_time_unix = strtotime( $event_start . ' ' . $next_occurrence );
+					$event_end_time_unix = strtotime( $event_end . ' ' . $next_occurrence );
+				}
+
+				// Calculate the start and end times for the next occurrence of the event
+				$event_start_time_unix = strtotime( $event_start . ' ' . $next_occurrence );
+				$event_end_time_unix = strtotime( $event_end . ' ' . $next_occurrence );
+			}
 		} elseif ( $event_frequency === 'monthly' ) {
 
 			// Event meta variables
@@ -247,13 +289,12 @@ function orgnk_events_get_next_scheduled( $id = null ) {
 		// When a date that hasn't occurred is found store it in an array and break out of loop
 		if ( $current_event > $now ) {
 
-			$event_start_time_unix = strtotime( esc_html( get_post_meta( $id, 'event_dates_' . $i . '_start', true ) ) );
-			$event_end_time_unix = strtotime( esc_html( get_post_meta( $id, 'event_dates_' . $i . '_end', true ) ) );
+			$event_start_time_unix = strtotime($event_date_start );
+			$event_end_time_unix = strtotime( $event_date_end );
 			$output['start_time'] 	= $event_start_time_unix;
 			$output['end_time']		= $event_end_time_unix;
 
 			return $output;
-
 		}
 	}
 }

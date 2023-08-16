@@ -35,6 +35,9 @@ class Organik_Events {
 		// Define the CPT rewrite variable on init - required here because we need to use get_permalink() which isn't available when plugins are initialised
 		add_action( 'init', array( $this, 'orgnk_events_cpt_rewrite_slug' ) );
 
+		// Register taxonomies first
+		new Organik_Events_Categories();
+
         // Hook into the 'init' action to add the Custom Post Type
 		add_action( 'init', array( $this, 'orgnk_events_cpt_register' ) );
 
@@ -49,6 +52,7 @@ class Organik_Events {
 
 		// Add a notice to the admin list view for this CPT
 		add_action( 'admin_notices', array( $this, 'orgnk_events_cpt_admin_table_notice' ) );
+		add_action('save_post', array( $this, 'orgnk_save_post' ), 10, 2 );
 
 		// Register a custom CRON event to call functions that updates recurring events dates & automatically set expired events to draft
 		add_action( 'init', array( $this, 'orgnk_events_register_cron' ) );
@@ -56,6 +60,7 @@ class Organik_Events {
 
 		// Modify the post type archive query
 		add_action( 'pre_get_posts', array( $this, 'orgnk_events_cpt_archive_query' ) );
+
 
 		// Modify the Organik theme sitemap get posts arguments
 		add_action( 'orgnk_sitemap_get_posts_arguments', array( $this, 'orgnk_events_sitemap_get_posts_arguments' ) );
@@ -300,39 +305,32 @@ class Organik_Events {
 		}
 	}
 
-	//=======================================================================================================================================================
 	/**
 	 * orgnk_events_cpt_archive_query()
 	 * Change the events archive order to order by the event start date meta
 	 */
 	public function orgnk_events_cpt_archive_query( $query ) {
 
-		if ( $query->is_post_type_archive( ORGNK_EVENTS_CPT_NAME ) && ! is_admin() && $query->is_main_query() ) {
+		if ( ( $query->is_post_type_archive( ORGNK_EVENTS_CPT_NAME ) || $query->is_tax( ORGNK_EVENTS_CATEGORIES_TAX_NAME ) ) && ! is_admin() && $query->is_main_query() ) {
 
-			$meta_query = array([
-						'relation'    => 'AND',
-						'event_featured' 			=> array(
-						'key'       				=> 'event_featured',
-						'type' 						=> 'numeric',
-						'compare'   				=> 'EXISTS',
-						),
-						'next_event_start_date'    	=> array(
-						'key'     					=> 'next_event_start_date',
-						'type' 						=> 'numeric',
-						'compare'   				=> 'EXISTS',
-						)
-					]);
+				$meta_query = array([
+					'relation'    => 'AND',
+					'event_featured' 			=> array(
+					'key'       				=> 'event_featured',
+					'type' 						=> 'numeric',
+					'compare'   				=> 'EXISTS',
+					),
+					'event_day_number'    	=> array(
+					'key'     					=> 'event_day_number',
+					'type'   					=> 'numeric',
+					'compare'   				=> 'EXISTS',
+					)
+				]);
 
-			$order_by = array(
-				'event_featured' => 'DESC',
-				'next_event_start_date' => 'ASC',
-			);
-					$query->set( 'meta_query', $meta_query );
-					$query->set( 'orderby', $order_by );
-
-				return $query;
-			}
+				$query->set( 'meta_query', $meta_query );
+				$query->set( 'orderby', array('event_day_number' => 'ASC') ); // Sorting by 'event_day_number' meta key
 		}
+	}
 
 	/**
 	 * orgnk_events_sitemap_get_posts_arguments()
@@ -347,6 +345,19 @@ class Organik_Events {
 		}
 
 		return $args;
+	}
+
+	public function orgnk_save_post($post_id, $post) {
+		if ($post->post_type == ORGNK_EVENTS_CPT_NAME) {
+			$event_day = get_post_meta($post_id, 'event_day', true);
+			$day_number = $this->get_day_number($event_day);
+			update_post_meta($post_id, 'event_day_number', $day_number);
+		}
+	}
+
+	public function get_day_number($day_name) {
+		$days = array('monday' => 1, 'tuesday' => 2, 'wednesday' => 3, 'thursday' => 4, 'friday' => 5, 'saturday' => 6, 'sunday' => 7);
+		return isset($days[$day_name]) ? $days[$day_name] : 0;
 	}
 
 	/**

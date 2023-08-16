@@ -173,6 +173,7 @@ class Organik_Events_ACF_Fields {
 					'choices' 			=> array(
 						'daily' 	=> 'Every day',
 						'weekly' 	=> 'Every Week',
+						'fortnightly'	=> 'Fortnightly',
 						'monthly' 	=> 'Every Month',
 					),
 					'default_value' 			=> false,
@@ -226,7 +227,32 @@ class Organik_Events_ACF_Fields {
 					'ajax' 				=> 0,
 					'placeholder' 		=> '',
 				),
+				array(
+					'key' => 'field_640954bd34d4f',
+					'label' => 'Starting From',
+					'name' => 'event_fortnight_day',
+					'type' => 'date_picker',
+					'instructions' => '',
+					'required' => 0,
+					'conditional_logic' 	=> array(
+						array(
+							array(
+								'field' 	=> 'field_60d0076d49d4e',
+								'operator' 	=> '==',
+								'value' 	=> 'fortnightly',
+							),
+						),
+					),
+					'wrapper' => array(
+						'width' => '',
+						'class' => '',
+						'id' => '',
+					),
+					'display_format' => 'd/m/Y',
+					'return_format' => 'd/m/Y',
+					'first_day' => 1,
 
+				),
 				// Field - Event Monthly occurence - Select
 				// Field only appears on monthly recurring
 				// Allows a user to select an event that starts on the nth occurence of each month
